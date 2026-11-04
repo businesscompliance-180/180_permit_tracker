@@ -1,0 +1,23 @@
+# Static site plus one serverless function (netlify/functions/drive.mjs).
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/firebase-config.js"
+  [headers.values]
+    Cache-Control = "no-cache"

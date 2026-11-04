@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Paste this whole file into: Firebase console > Firestore Database > Rules > Publish
+// BEFORE publishing, change OWNER_EMAIL below to your own Google email (lowercase).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function ownerEmail() { return 'businesscompliance180@gmail.com'; }   // <-- change this
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function me() { return request.auth.token.email.lower(); }
+    function memberPath() { return /databases/$(database)/documents/members/$(me()); }
+    function isMember() { return signedIn() && exists(memberPath()); }
+    function role() { return get(memberPath()).data.role; }
+    function canEdit()  { return isMember() && role() in ['owner', 'admin', 'editor']; }
+    function isAdmin()  { return isMember() && role() in ['owner', 'admin']; }
+    function isOwnerUser() { return signedIn() && me() == ownerEmail(); }
+
+    function validPermit(d) {
+      return d.type is string && d.type.size() > 0 && d.type.size() <= 80
+        && d.property is string && d.property.size() > 0 && d.property.size() <= 80
+        && d.issued is string && d.issued.size() == 10
+        && d.term in ['Monthly', 'Quarterly', 'Yearly', 'Custom']
+        && d.priority in ['High', 'Medium', 'Low']
+        && (!('stage' in d) || d.stage == null || d.stage in ['Final', 'Temporary'])
+        && (!('scans' in d) || (d.scans is list && d.scans.size() <= 10))
+        && (!('history' in d) || (d.history is list && d.history.size() <= 100));
+    }
+
+    // ---------- team ----------
+    match /members/{email} {
+      // Everyone signed in can read their OWN entry (that is how the app learns whether they have access).
+      // Members can read the whole team list.
+      allow read: if isMember() || (signedIn() && me() == email);
+
+      // The owner can create their own owner entry (first sign-in).
+      // Admins can add admins, editors and viewers.
+      allow create: if (isOwnerUser() && email == me()
+                         && request.resource.data.role == 'owner'
+                         && request.resource.data.email.lower() == email)
+                    || (isAdmin() && email == email.lower()
+                         && request.resource.data.email.lower() == email
+                         && request.resource.data.role in ['admin', 'editor', 'viewer']);
+
+      allow update: if isAdmin() && resource.data.role != 'owner'
+                    && request.resource.data.role in ['admin', 'editor', 'viewer']
+                    && request.resource.data.email == resource.data.email;
+
+      allow delete: if isAdmin() && resource.data.role != 'owner';
+    }
+
+    // ---------- shared settings (permit types) ----------
+    match /config/{docId} {
+      allow read: if isMember();
+      allow create: if isOwnerUser() && docId == 'main';
+      allow update: if canEdit();
+    }
+
+    // ---------- properties ----------
+    match /properties/{id} {
+      allow read: if isMember();
+      allow create, update: if canEdit()
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.color is string
+        && request.resource.data.color.matches('^#[0-9a-fA-F]{6}$');
+      allow delete: if canEdit();
+    }
+
+    // ---------- permits ----------
+    match /permits/{id} {
+      allow read: if isMember();
+      allow create, update: if canEdit() && validPermit(request.resource.data);
+      allow delete: if canEdit();
+    }
+  }
+}

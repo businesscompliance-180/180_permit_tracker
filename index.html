@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151514" media="(prefers-color-scheme: dark)">
+<title>Permit tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbfbfa; --surface:#ffffff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e6e5e1; --line-strong:#d2d1cb;
+  --accent:#243b53; --accent-ink:#ffffff; --today:#eef2f7; --other:#f6f6f4;
+  --high:#b42318; --med:#9a5b00; --low:#2b7560;
+  --font:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151514; --surface:#1d1d1b; --ink:#ecebe7; --muted:#9d9c95; --line:#2d2c29; --line-strong:#403f3b;
+    --accent:#a9c2de; --accent-ink:#151514; --today:#232a33; --other:#191918;
+    --high:#f19a8f; --med:#e6b865; --low:#74c4aa;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151514; --surface:#1d1d1b; --ink:#ecebe7; --muted:#9d9c95; --line:#2d2c29; --line-strong:#403f3b;
+  --accent:#a9c2de; --accent-ink:#151514; --today:#232a33; --other:#191918;
+  --high:#f19a8f; --med:#e6b865; --low:#74c4aa;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.locked{visibility:hidden}
+
+/* ---------- sign-in gate ---------- */
+.gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+.gate .box{max-width:420px;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:28px;text-align:center}
+.gate h2{margin:0 0 8px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.gate p{color:var(--muted);margin:0 0 18px}
+.gate .email{color:var(--ink);font-weight:500;word-break:break-all}
+.gate ol{text-align:left;color:var(--muted);padding-left:20px;margin:0 0 4px;font-size:14px}
+.gate ol li+li{margin-top:4px}
+.gate code{background:var(--other);padding:1px 6px;border-radius:4px;font-size:13px;color:var(--ink)}
+.gate .btn+.btn{margin-left:8px}
+
+/* ---------- layout + sidebar ---------- */
+.app{display:flex;min-height:100vh}
+.side{flex:none;width:216px;background:var(--surface);border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;height:100dvh;overflow:hidden;transition:width .18s ease;z-index:30}
+.app.collapsed .side{width:60px}
+.side-brand{font-weight:600;font-size:15px;padding:6px 12px 16px;white-space:nowrap;letter-spacing:-.005em}
+.app.collapsed .side-brand{display:none}
+.app.collapsed .side{padding-top:28px}
+.nav{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted);text-align:left;white-space:nowrap}
+.nav:hover{background:var(--other);color:var(--ink)}
+.nav[aria-current="page"]{background:var(--today);color:var(--ink);font-weight:500}
+.nav svg{flex:none;width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.app.collapsed .nl{display:none}
+.app.collapsed .nav.collapse svg{transform:rotate(180deg)}
+.userbox{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px 8px 6px 10px;border-top:1px solid var(--line);white-space:nowrap;overflow:hidden}
+.userbox .avatar{width:30px;height:30px;font-size:13px}
+.uinfo{min-width:0;line-height:1.3}
+.uinfo b{display:block;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.uinfo small{color:var(--muted);font-size:12px}
+.app.collapsed .uinfo{display:none}
+.main{flex:1;min-width:0}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 64px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;justify-content:space-between;margin-bottom:6px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 14px;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line-strong)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:7px 14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:500}
+.btn.danger{color:var(--high)}
+.btn.link{border-color:transparent;background:none;padding:6px 8px}
+.btn.sm{padding:5px 10px;font-size:14px}
+
+select,input[type=text],input[type=email],input[type=date]{border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);padding:8px 10px;width:100%}
+input[readonly]{background:none;border-color:transparent;padding-left:0}
+
+.summary{display:flex;flex-wrap:wrap;gap:6px 22px;margin:14px 0 14px;color:var(--muted);font-size:14px}
+.summary span{display:inline-flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.expired{background:var(--high)} .dot.soon{background:var(--med)} .dot.active{background:var(--low)}
+.summary b{color:var(--ink);font-weight:600}
+
+.banner{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;border:1px solid var(--line-strong);background:var(--other);border-radius:10px;padding:10px 14px;margin:14px 0;font-size:14px}
+.banner .b-act{display:flex;gap:8px}
+
+/* property chips (legend + filter) */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.pchip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-strong);background:var(--surface);border-radius:999px;padding:5px 12px;cursor:pointer;font-size:14px;--c:var(--muted)}
+.pchip i{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block}
+.pchip .n{color:var(--muted);font-size:13px}
+.pchip:hover{border-color:var(--muted)}
+.pchip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface));font-weight:500}
+.pchip.all.on{border-color:var(--accent);background:var(--today)}
+.pchip.all i{display:none}
+
+/* color picker: 20 presets + custom */
+.cpick{display:contents}
+.cswatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line-strong);cursor:pointer;flex:none;padding:0}
+.cswatch:hover{box-shadow:0 0 0 1px var(--muted)}
+.swatch-static{width:30px;height:30px;border-radius:50%;flex:none;display:inline-block}
+.cpanel{order:99;flex-basis:100%;display:flex;flex-wrap:wrap;gap:9px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--other);margin-top:4px}
+.pk{display:block;width:26px;height:26px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line-strong);cursor:pointer;padding:0;position:relative;flex:none;background:var(--c)}
+.pk:hover{box-shadow:0 0 0 2px var(--muted)}
+.pk.sel{box-shadow:0 0 0 2px var(--ink)}
+.pk.custom{background:conic-gradient(#e5484d,#f5a524,#30a46c,#3b9ae6,#8a55c8,#e5484d);overflow:hidden}
+.pk.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+
+/* ---------- calendar header ---------- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
+.cal-head h2{font-size:18px;font-weight:600;margin:0;min-width:10ch}
+.cal-nav{display:flex;gap:6px;align-items:center}
+.cal-nav .btn{padding:5px 12px}
+
+/* ---------- year view ---------- */
+.year{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:22px 26px}
+.mini h3{margin:0 0 6px;font-size:15px;font-weight:600}
+.mname{border:0;background:none;padding:2px 0;cursor:pointer;font-weight:600;font-size:15px}
+.mname:hover{text-decoration:underline;text-underline-offset:3px}
+.mdow,.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mdow span{font-size:11px;color:var(--muted);text-align:center;padding-bottom:4px}
+.yd{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:38px;padding:3px 0 0;border:0;background:none;border-radius:6px;font-size:12px;cursor:default}
+button.yd{cursor:pointer}
+button.yd:hover{background:var(--other)}
+.yn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;line-height:1}
+.yd.today .yn{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;margin-top:2px;max-width:32px}
+.d{width:6px;height:6px;border-radius:50%;border:1.5px solid var(--c);display:inline-block}
+.d.exp{background:var(--c)}
+.dp{font-size:9px;line-height:6px;color:var(--muted);font-weight:600}
+
+/* ---------- month view ---------- */
+.grid{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.dow,.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{padding:8px 10px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line);font-weight:500}
+.day{min-height:108px;padding:6px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0;background:var(--surface)}
+.day:nth-child(7n){border-right:0}
+.week:last-child .day{border-bottom:0}
+.day.other{background:var(--other)}
+.day.other .num{color:var(--muted);opacity:.6}
+.day.has{cursor:pointer}
+.num{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;font-size:13px;border-radius:50%;margin-bottom:3px}
+.day.today{background:var(--today)}
+.day.today .num{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.evs{display:flex;flex-direction:column;gap:3px}
+.chip{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:1px solid transparent;border-radius:5px;padding:2px 6px;font-size:12px;line-height:1.4;cursor:pointer;color:var(--ink);background:none;min-width:0;--c:var(--muted)}
+.chip .mk{flex:none;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--c)}
+.chip.exp .mk{background:var(--c)}
+.chip.exp{background:color-mix(in srgb,var(--c) 17%,transparent)}
+.chip.iss{border-color:color-mix(in srgb,var(--c) 45%,transparent)}
+.chip .label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .hi{margin-left:auto;font-weight:700;color:var(--high);padding-left:4px}
+.more{border:0;background:none;color:var(--muted);font-size:12px;text-align:left;padding:1px 6px;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend .mk{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--muted);display:inline-block}
+.legend .mk.fill{background:var(--muted)}
+
+/* ---------- table view ---------- */
+.tools{display:flex;flex-wrap:wrap;gap:12px 14px;align-items:flex-end;margin-bottom:14px}
+.tools .f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tools .f span{font-size:13px;color:var(--muted);font-weight:500}
+.tools select,.tools input{padding:6px 10px;width:auto;min-width:140px}
+.tools input[type=date]{min-width:0}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.tools-end{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.tools-end .count{color:var(--muted);font-size:14px;margin-right:6px}
+.table-wrap{border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-weight:500;color:var(--muted);font-size:13px;padding:0}
+th button{width:100%;text-align:left;border:0;background:none;padding:11px 14px;cursor:pointer;color:inherit;font-weight:inherit}
+th button[data-active="true"]{color:var(--ink)}
+th button .ar{display:inline-block;width:1em;color:var(--muted)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--other)}
+td.type{font-weight:500}
+.clip{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-left:7px}
+.pdot{display:inline-flex;align-items:center;gap:8px}
+.pdot i{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block}
+.pill{display:inline-flex;align-items:center;gap:7px}
+.pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.pill.High i{background:var(--high)} .pill.Medium i{background:var(--med)} .pill.Low i{background:var(--low)}
+.st{display:inline-flex;align-items:center;gap:7px}
+.st i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.st.expired i{background:var(--high)} .st.soon i{background:var(--med)} .st.active i{background:var(--low)}
+.st.expired{color:var(--high)}
+.empty{padding:36px 20px;text-align:center;color:var(--muted)}
+.empty p{margin:0 0 14px}
+.print-head{display:none}
+
+/* ---------- dashboard ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0 20px}
+.stat{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:14px 16px}
+.sn{font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.sl{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:14px;margin-top:2px}
+.dgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:20px}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:16px 18px;min-width:0}
+.card h2{font-size:15px;font-weight:600;margin:0 0 12px}
+.arow{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:9px 6px;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;border-radius:0;--c:var(--muted)}
+.arow:last-child{border-bottom:0}
+.arow:hover{background:var(--other)}
+.arow i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.arow .t{flex:1;min-width:0}
+.arow .t b{font-weight:500;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .t small{color:var(--muted);font-size:13px}
+.arow .s{font-size:13px;white-space:nowrap}
+.brow{margin-bottom:14px;--c:var(--muted)}
+.brow:last-child{margin-bottom:0}
+.brow .bt{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:5px}
+.brow .bt span:first-child{display:inline-flex;align-items:center;gap:8px}
+.brow .bt i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.brow .bar{height:6px;border-radius:3px;background:var(--other);overflow:hidden}
+.brow .bar b{display:block;height:100%;background:var(--c);border-radius:3px}
+.brow small{color:var(--muted);font-size:12px}
+.bars{display:flex;gap:8px;height:170px;align-items:stretch}
+.bcol{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bwrap{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid var(--line-strong)}
+.bstack{width:64%;max-width:34px;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;min-height:0}
+.bl{font-size:12px;color:var(--muted);text-align:center;line-height:1.2}
+.bl b{display:block;color:var(--ink);font-weight:500;min-height:1.2em}
+
+/* ---------- settings + team ---------- */
+.narrow{max-width:680px}
+.sec{margin-bottom:30px}
+.sec h2{font-size:16px;font-weight:600;margin:0 0 4px}
+.sec>p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row .grow{flex:1;min-width:120px}
+.row input[type=text]{padding:6px 10px}
+.row .cnt{color:var(--muted);font-size:13px;white-space:nowrap}
+.addrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.addrow input[type=text],.addrow input[type=email]{flex:1;min-width:160px;width:auto}
+.addrow select{width:auto}
+.pref{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line)}
+.pref select{width:auto}
+.pref small{display:block;color:var(--muted);font-size:13px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--today);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.mrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.mrow .who{flex:1;min-width:0}
+.mrow .who b{font-weight:500;display:block}
+.mrow .who small{color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.mrow select{width:auto;padding:6px 10px}
+.note{border:1px solid var(--line-strong);background:var(--other);border-radius:10px;padding:12px 14px;font-size:14px;margin-bottom:18px}
+.roles{color:var(--muted);font-size:13px;margin-top:14px}
+.roles div+div{margin-top:3px}
+
+/* ---------- dialogs ---------- */
+dialog{border:1px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink);padding:0;width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 48px)}
+dialog::backdrop{background:rgba(20,20,18,.45)}
+.dlg{padding:22px}
+.dlg h3{margin:0 0 16px;font-size:18px;font-weight:600}
+.field{margin-bottom:14px}
+.field label,.field .lbl{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.field .extra{margin-top:8px}
+.newprop{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.newprop input[type=text]{flex:1;width:auto}
+.radios{display:flex;gap:8px}
+.radios label{flex:1;margin:0;position:relative}
+.radios input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.radios span{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 6px;color:var(--ink);font-size:14px}
+.radios span i{width:8px;height:8px;border-radius:50%}
+.radios .High i{background:var(--high)} .radios .Medium i{background:var(--med)} .radios .Low i{background:var(--low)}
+.radios input:checked+span{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:500}
+.radios input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.att{display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;font-size:14px;background:var(--surface)}
+.att .an{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att .am{color:var(--muted);font-size:13px;white-space:nowrap}
+.att.err .am{color:var(--high);white-space:normal;text-align:right}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.hint a{color:var(--accent)}
+.preview{font-size:14px;color:var(--muted);margin:2px 0 4px;min-height:21px}
+.preview b{color:var(--ink);font-weight:600}
+.err{color:var(--high);font-size:13px;min-height:18px;margin-bottom:6px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.actions .spacer{flex:1}
+dl.facts{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;margin:0 0 18px}
+dl.facts dt{color:var(--muted);font-size:14px}
+dl.facts dd{margin:0;min-width:0}
+.slink{display:inline-flex;align-items:center;gap:4px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;margin:0 14px 2px 0}
+.hist{margin:-6px 0 18px;font-size:13px;color:var(--muted)}
+.hist b{font-weight:500;color:var(--ink)}
+.hist div{margin-top:6px}
+.dayList{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.dayList .chip{font-size:14px;padding:8px 10px;border-radius:8px}
+.dayList .chip .sub{color:var(--muted);margin-left:auto;padding-left:10px;white-space:nowrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200;max-width:calc(100vw - 32px)}
+.toast.show{opacity:1}
+
+.navs{display:flex;flex-direction:column;gap:4px}
+.checks{display:flex;gap:10px;flex-wrap:wrap}
+.field .chk{display:flex;align-items:center;gap:9px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px;margin:0;color:var(--ink);font-weight:400;background:var(--surface)}
+.chk input{width:18px;height:18px;margin:0;accent-color:var(--accent);cursor:pointer}
+.chk:has(input:checked){border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:500}
+.tag{display:inline-block;font-size:12px;padding:1px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);vertical-align:1px;margin-left:8px;white-space:nowrap}
+.tag.Final{color:var(--low);border-color:currentColor}
+.tag.Temporary{color:var(--med);border-color:currentColor}
+.mbar{display:none;align-items:center;gap:10px;margin-bottom:12px}
+.mbar select{flex:1;width:auto;min-width:0}
+.mbar .cnt{color:var(--muted);font-size:13px;white-space:nowrap}
+#cardList{display:none;flex-direction:column;gap:10px}
+.pcard{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;background:var(--surface);padding:12px 14px;cursor:pointer;--c:var(--muted)}
+.pcard .r1{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pcard .r1 b{font-weight:600;font-size:15px;min-width:0;overflow-wrap:anywhere}
+.pcard .st{font-size:13px;white-space:nowrap;margin-top:2px}
+.pcard .r2{display:flex;align-items:center;margin-top:2px;color:var(--muted);font-size:14px}
+.pcard .r2 .tag{margin-left:10px}
+.pcard .r3{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:13px;color:var(--muted);align-items:center}
+.pcard .r3 b{color:var(--ink);font-weight:500}
+.agenda{display:none;margin-top:18px}
+.agenda h3{font-size:15px;font-weight:600;margin:0 0 6px}
+.agrow{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:10px 2px;text-align:left;cursor:pointer;--c:var(--muted)}
+.agrow .ad{width:40px;text-align:center;line-height:1.2;flex:none}
+.agrow .ad b{display:block;font-size:17px;font-weight:600}
+.agrow .ad small{color:var(--muted);font-size:12px}
+.agrow .at{flex:1;min-width:0}
+.agrow .at b{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agrow .at small{color:var(--muted);font-size:13px}
+.agrow .ak{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);white-space:nowrap}
+.agrow .mkk{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c);display:inline-block}
+.agrow.exp .mkk{background:var(--c)}
+.fab{display:none}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){ .dgrid{grid-template-columns:1fr} }
+@media (max-width:720px){
+  html{-webkit-text-size-adjust:100%}
+  input,select{font-size:16px}
+  .app{display:block}
+
+  /* sidebar becomes a bottom tab bar */
+  .side,.app.collapsed .side{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;height:auto;flex-direction:row;gap:0;padding:0 0 env(safe-area-inset-bottom,0px);border-right:0;border-top:1px solid var(--line);z-index:40;transition:none;overflow:visible}
+  .side-brand,.userbox,#signOutBtn,#collapseBtn{display:none}
+  .navs{flex-direction:row;width:100%;gap:0}
+  .nav{flex:1;min-width:0;flex-direction:column;justify-content:center;gap:3px;min-height:56px;padding:8px 2px 7px;border-radius:0;font-size:11px;text-align:center}
+  .nav svg{width:22px;height:22px}
+  .nl,.app.collapsed .nl{display:block}
+  .nav[aria-current="page"]{background:none;color:var(--accent);font-weight:600}
+  .main{margin-left:0}
+  .wrap{padding:14px 14px calc(100px + env(safe-area-inset-bottom,0px))}
+
+  /* header */
+  h1{font-size:20px}
+  header.top{gap:10px}
+  .controls{width:100%}
+  .seg{width:100%}
+  .seg button{flex:1;padding:10px 0}
+  #addBtn{display:none}
+  .fab{display:flex;position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.28);z-index:35;cursor:pointer}
+
+  /* touch-friendly sizes */
+  .btn{min-height:40px}
+  .btn.sm{min-height:36px}
+  .btn.link{min-height:36px}
+  .cal-nav .btn{min-height:38px;padding:5px 14px}
+  .cal-head h2{font-size:17px}
+  .summary{gap:4px 16px}
+
+  /* property chips scroll sideways */
+  .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -14px 14px;padding:2px 14px 6px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .pchip{flex:none;padding:7px 13px}
+
+  /* table view becomes cards */
+  .mbar{display:flex}
+  .tools{display:none}
+  .tools.open{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .tools .f,.tools select,.tools input{width:100%;min-width:0}
+  .tools .presets,.tools-end{grid-column:1 / -1}
+  .tools-end{margin-left:0}
+  .tools-end .count{display:none}
+  .tools-end .btn{flex:1}
+  #permitTable{display:none!important}
+  .table-wrap{border:0;background:none;overflow:visible}
+  #cardList{display:flex}
+
+  /* dashboard */
+  .stats{grid-template-columns:1fr 1fr;gap:10px}
+  .sn{font-size:22px}
+  .dgrid{gap:14px}
+
+  /* forms and sheets */
+  dialog{width:100%;max-width:none;margin:auto 0 0 0;border-radius:16px 16px 0 0;border-bottom:0;max-height:92vh;max-height:92dvh}
+  .dlg{padding:20px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+  .radios span,.field .chk{min-height:44px}
+  .att{padding:8px 8px 8px 12px}
+  .addrow input[type=text],.addrow input[type=email]{min-width:100%}
+  .addrow .btn{flex:1}
+  .pref{flex-wrap:wrap}
+  .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:640px){
+  .day{min-height:62px;padding:4px}
+  .dow div{padding:6px 4px;text-align:center}
+  .evs{flex-direction:row;flex-wrap:wrap;gap:4px}
+  .evs .chip{width:auto;padding:0;border:0!important;background:none!important}
+  .evs .chip .label,.evs .chip .hi{display:none}
+  .evs .chip .mk{width:9px;height:9px}
+  .more{display:none}
+  dl.facts{grid-template-columns:96px 1fr}
+  .year{grid-template-columns:1fr 1fr;gap:18px 14px}
+  .mini h3{margin-bottom:2px}
+  .mname{font-size:14px;padding:6px 0}
+  .yd{height:34px;font-size:11px}
+  .yn{width:18px;height:18px}
+  .dots{max-width:24px}
+  .d{width:5px;height:5px;border-width:1.2px}
+  .agenda{display:block}
+}
+@media (prefers-reduced-motion:reduce){.toast,.side{transition:none}}
+
+/* ---------- print (table view) ---------- */
+@media print{
+  :root,:root:not([data-theme="light"]),:root[data-theme="dark"]{
+    --bg:#fff;--surface:#fff;--ink:#000;--muted:#444;--line:#ccc;--line-strong:#999;--other:#f3f3f3;--today:#eee;color-scheme:light;
+    padding:0;
+  }
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-size:11px;background:#fff}
+  .side,header.top,.summary,#propChips,.tools,.mbar,.fab,#cardList,.toast,.banner,.gate,#pgDash,#pgSettings,#pgTeam,#calHead,#yearView,#monthView,#legend,dialog{display:none!important}
+  #permitTable{display:table!important}
+  .wrap{max-width:none;padding:0}
+  .main{margin:0}
+  .print-head{display:block;margin-bottom:12px}
+  .print-head h2{font-size:16px;margin:0 0 2px}
+  .print-head p{margin:0;color:#444}
+  .table-wrap{border:0;overflow:visible}
+  table{min-width:0;width:100%}
+  th,td{padding:6px 8px;white-space:normal}
+  th button{padding:6px 8px}
+  th button .ar{display:none}
+  .clip{display:none}
+  tr{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- sign-in / access gate -->
+<div class="gate" id="gate"><div class="box" id="gateBody"><h2>Loading…</h2></div></div>
+
+<div class="app locked" id="app">
+
+  <aside class="side" id="side" aria-label="Main navigation">
+    <div class="side-brand">Permit tracker</div>
+    <nav class="navs" aria-label="Pages">
+      <button type="button" class="nav" data-page="permits" title="Permits">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="nl">Permits</span>
+      </button>
+      <button type="button" class="nav" data-page="dashboard" title="Dashboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+        <span class="nl">Dashboard</span>
+      </button>
+      <button type="button" class="nav" data-page="settings" title="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="nl">Settings</span>
+      </button>
+      <button type="button" class="nav" data-page="team" title="Team access">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="nl">Team access</span>
+      </button>
+    </nav>
+
+    <div class="userbox" id="userBox">
+      <div class="avatar" id="uAvatar">?</div>
+      <div class="uinfo"><b id="uName"></b><small id="uRole"></small></div>
+    </div>
+    <button type="button" class="nav" id="signOutBtn" title="Sign out">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="nl">Sign out</span>
+    </button>
+    <button type="button" class="nav collapse" id="collapseBtn" aria-expanded="true" title="Collapse sidebar">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+      <span class="nl">Collapse</span>
+    </button>
+  </aside>
+
+  <div class="main"><div class="wrap">
+    <header class="top">
+      <h1 id="pageTitle">Permits</h1>
+      <div class="controls">
+        <div class="seg" id="viewSeg" role="group" aria-label="View">
+          <button type="button" data-view="year" aria-pressed="true">Year</button>
+          <button type="button" data-view="month" aria-pressed="false">Month</button>
+          <button type="button" data-view="table" aria-pressed="false">Table</button>
+        </div>
+        <button type="button" class="btn primary hidden" id="addBtn">Add permit</button>
+      </div>
+    </header>
+
+    <!-- PERMITS -->
+    <section id="pgPermits">
+      <div class="banner hidden" id="importBanner"></div>
+      <div class="summary" id="summary" aria-live="polite"></div>
+      <div class="chips" id="propChips" role="group" aria-label="Filter by property"></div>
+
+      <div class="cal-head" id="calHead">
+        <h2 id="calLabel"></h2>
+        <div class="cal-nav">
+          <button type="button" class="btn" id="prevBtn" aria-label="Previous">&lsaquo;</button>
+          <button type="button" class="btn" id="todayBtn">Today</button>
+          <button type="button" class="btn" id="nextBtn" aria-label="Next">&rsaquo;</button>
+        </div>
+      </div>
+
+      <div id="yearView"><div class="year" id="yearGrid"></div></div>
+
+      <div id="monthView" class="hidden">
+        <div class="grid">
+          <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+          <div id="weeks"></div>
+        </div>
+        <div class="agenda" id="monthAgenda"></div>
+      </div>
+
+      <div class="legend" id="legend">
+        <span><i class="mk fill"></i>Expires</span>
+        <span><i class="mk"></i>Issued</span>
+        <span>Color shows the property</span>
+      </div>
+
+      <div id="tabView" class="hidden">
+        <div class="mbar">
+          <button type="button" class="btn sm" id="filterToggle" aria-expanded="false" aria-controls="tabTools">Filters</button>
+          <select id="sortSel" aria-label="Sort by">
+            <option value="" disabled>Sort by…</option>
+            <option value="expiry:1">Expiry: soonest first</option>
+            <option value="expiry:-1">Expiry: latest first</option>
+            <option value="type:1">Permit A to Z</option>
+            <option value="property:1">Property A to Z</option>
+            <option value="priority:1">Priority: high first</option>
+            <option value="status:1">Most urgent first</option>
+          </select>
+          <span class="cnt" id="tabCountM"></span>
+        </div>
+        <div class="tools" id="tabTools">
+          <label class="f"><span>Permit type</span><select id="tfType"></select></label>
+          <label class="f"><span>Status</span>
+            <select id="tfStatus"><option value="all">Any status</option><option value="expired">Expired</option><option value="soon">Due soon</option><option value="active">Active</option></select>
+          </label>
+          <label class="f"><span>Stage</span>
+            <select id="tfStage"><option value="all">Any stage</option><option value="Final">Final</option><option value="Temporary">Temporary</option><option value="none">Not set</option></select>
+          </label>
+          <label class="f"><span>Date by</span>
+            <select id="tfBy"><option value="expiry">Expiry date</option><option value="issued">Issuance date</option></select>
+          </label>
+          <label class="f"><span>From</span><input type="date" id="tfFrom"></label>
+          <label class="f"><span>To</span><input type="date" id="tfTo"></label>
+          <div class="presets" role="group" aria-label="Date presets">
+            <button type="button" class="btn sm" data-preset="30">Next 30 days</button>
+            <button type="button" class="btn sm" data-preset="90">Next 90 days</button>
+            <button type="button" class="btn sm" data-preset="year">This year</button>
+          </div>
+          <div class="tools-end">
+            <span class="count" id="tabCount"></span>
+            <button type="button" class="btn" id="clearBtn">Clear filters</button>
+            <button type="button" class="btn" id="printBtn">Print</button>
+          </div>
+        </div>
+
+        <div class="print-head" id="printHead"><h2>Permit tracker</h2><p id="printMeta"></p></div>
+
+        <div class="table-wrap">
+          <table id="permitTable">
+            <thead><tr id="thead"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+          <div class="empty hidden" id="tabEmpty"></div>
+        </div>
+        <div id="cardList"></div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="pgDash" class="hidden"></section>
+
+    <!-- SETTINGS -->
+    <section id="pgSettings" class="hidden narrow">
+      <div class="sec">
+        <h2>Account</h2>
+        <div class="pref">
+          <div><span id="acctEmail"></span><small id="acctRole"></small></div>
+          <button type="button" class="btn" data-signout>Sign out</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Properties and colors</h2>
+        <p>Each property’s color is used for its dots and markers in the Year and Month views. Shared with your whole team.</p>
+        <div id="propList"></div>
+        <div class="addrow" id="propAdd">
+          <div class="cpick" id="newPropPick"></div>
+          <input type="text" id="newPropName" placeholder="New property name" maxlength="60" aria-label="New property name">
+          <button type="button" class="btn" id="addPropBtn">Add property</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Permit types</h2>
+        <p>These appear in the permit type dropdown for everyone.</p>
+        <div id="typeList"></div>
+        <div class="addrow" id="typeAdd">
+          <input type="text" id="newTypeName" placeholder="New permit type" maxlength="60" aria-label="New permit type">
+          <button type="button" class="btn" id="addTypeBtn">Add type</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>My preferences</h2>
+        <p>Saved on this device only.</p>
+        <div class="pref">
+          <div>Due soon window<small>Permits expiring within this many days are marked due soon.</small></div>
+          <select id="setSoon" aria-label="Due soon window">
+            <option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option>
+          </select>
+        </div>
+        <div class="pref">
+          <div>Theme</div>
+          <select id="setTheme" aria-label="Theme">
+            <option value="auto">Match device</option><option value="light">Light</option><option value="dark">Dark</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section id="pgTeam" class="hidden narrow">
+      <div class="note">Members sign in with the Google account that matches the email listed here. Anyone not on this list can’t read any data. Also share your Google Drive scan folder with each member so they can open scans.</div>
+      <div class="sec">
+        <h2>Members</h2>
+        <div id="memberList"></div>
+        <form class="addrow hidden" id="memberForm">
+          <input type="text" id="mName" placeholder="Name" required maxlength="60" aria-label="Member name">
+          <input type="email" id="mEmail" placeholder="Google email" required maxlength="100" aria-label="Member Google email">
+          <select id="mRole" aria-label="Role"><option>Viewer</option><option selected>Editor</option><option>Admin</option></select>
+          <button type="submit" class="btn">Add member</button>
+        </form>
+        <div class="roles">
+          <div><b>Owner</b> is the account that set this up and can’t be removed.</div>
+          <div><b>Admin</b> manages members and permits.</div>
+          <div><b>Editor</b> adds and edits permits, properties and types.</div>
+          <div><b>Viewer</b> can view permits and open scans only.</div>
+        </div>
+      </div>
+    </section>
+  </div></div>
+</div>
+
+<!-- Add / edit -->
+<dialog id="formDlg" aria-labelledby="formTitle">
+  <form id="form" class="dlg" novalidate>
+    <h3 id="formTitle">Add permit</h3>
+
+    <div class="field">
+      <label for="fType">Type of permit</label>
+      <select id="fType"></select>
+      <input type="text" id="fTypeNew" class="extra hidden" placeholder="New permit type" maxlength="60">
+    </div>
+
+    <div class="field">
+      <label for="fProp">Property</label>
+      <select id="fProp"></select>
+      <div class="extra newprop hidden" id="newPropBox">
+        <div class="cpick" id="fPropPick"></div>
+        <input type="text" id="fPropNew" placeholder="New property name" maxlength="60">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fIssued">Issuance date</label>
+      <input type="date" id="fIssued">
+    </div>
+
+    <div class="field">
+      <label for="fTerm">Expiration</label>
+      <select id="fTerm">
+        <option>Monthly</option><option>Quarterly</option><option selected>Yearly</option><option>Custom</option>
+      </select>
+      <div id="customRow" class="extra hidden">
+        <label for="fCustom" style="margin-bottom:5px">Custom expiry date</label>
+        <input type="date" id="fCustom">
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="prLbl">Priority level</span>
+      <div class="radios" role="radiogroup" aria-labelledby="prLbl">
+        <label><input type="radio" name="pr" value="High"><span class="High"><i></i>High</span></label>
+        <label><input type="radio" name="pr" value="Medium" checked><span class="Medium"><i></i>Medium</span></label>
+        <label><input type="radio" name="pr" value="Low"><span class="Low"><i></i>Low</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="stLbl">Permit stage (optional)</span>
+      <div class="checks" role="group" aria-labelledby="stLbl">
+        <label class="chk"><input type="checkbox" name="stage" value="Final"><span>Final</span></label>
+        <label class="chk"><input type="checkbox" name="stage" value="Temporary"><span>Temporary</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Scanned copies (optional)</span>
+      <div id="attList"></div>
+      <input type="file" id="fileInput" class="hidden" accept="image/jpeg,image/png,image/webp,application/pdf" multiple>
+      <button type="button" class="btn sm" id="uploadBtn">Upload scan</button>
+      <div class="hint">JPG, PNG or PDF, up to 15 MB each and 5 per permit. Files are saved to the shared Drive folder automatically.</div>
+    </div>
+
+    <div class="preview" id="preview" aria-live="polite"></div>
+    <div class="err" id="formErr" role="alert"></div>
+
+    <div class="actions">
+      <button type="button" class="btn" id="cancelForm">Cancel</button>
+      <button type="submit" class="btn primary" id="saveBtn">Save permit</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Detail / day list -->
+<dialog id="viewDlg" aria-labelledby="viewTitle">
+  <div class="dlg">
+    <h3 id="viewTitle"></h3>
+    <div id="viewBody"></div>
+  </div>
+</dialog>
+
+<button type="button" class="fab hidden" id="fab" aria-label="Add permit">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+const CFG = window.PERMIT_CONFIG || {};
+const FB = CFG.firebase || {};
+const SETUP_OK = !!(FB.apiKey && !/^PASTE/.test(FB.apiKey) && FB.projectId && !/^PASTE/.test(FB.projectId) && CFG.ownerEmail && !/^PASTE/.test(CFG.ownerEmail));
+const OWNER = String(CFG.ownerEmail || "").trim().toLowerCase();
+
+const DEFAULT_TYPES = ["Business permit","Fire safety certificate","Sanitary permit","Health permit","Occupancy permit","Signage permit","Environmental clearance","Barangay clearance"];
+const PALETTE = ["#e5484d","#f76b15","#f5a524","#d9b100","#7fb135","#30a46c","#12a594","#1f9fb0","#3b9ae6","#3b6fd4","#5b5bd6","#8a55c8","#ab4aba","#d4478a","#e0517a","#8c6b4f","#5c6b7a","#3a3a38","#9a9a94","#243b53"];
+const COLOR_ORDER = [9,0,5,2,11,13,7,1,10,4,12,14,8,3,6,15,16,17,18,19];
+const TERM_MONTHS = {Monthly:1, Quarterly:3, Yearly:12};
+const PR_RANK = {High:0, Medium:1, Low:2};
+const OLD_KEYS = ["permit-tracker-v2", "permit-tracker-v1"];
+const PREF_KEY = "permit-tracker-prefs";
+const IMPORTED_KEY = "permit-tracker-imported";
+
+/* ---------------- state ---------------- */
+const prefs = {soonDays:30, theme:"auto", collapsed:null};
+try {
+  const p = JSON.parse(localStorage.getItem(PREF_KEY) || "null");
+  if (p){
+    if ([7,14,30,60,90].indexOf(+p.soonDays) > -1) prefs.soonDays = +p.soonDays;
+    if (["auto","light","dark"].indexOf(p.theme) > -1) prefs.theme = p.theme;
+    if (typeof p.collapsed === "boolean") prefs.collapsed = p.collapsed;
+  }
+} catch (e) {}
+function savePrefs(){ try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} }
+if (prefs.collapsed === null) prefs.collapsed = window.innerWidth < 720;
+
+const S = {permits:[], types:DEFAULT_TYPES.slice(), properties:[], team:[], settings:prefs};
+const ready = {permits:false, config:false, properties:false, members:false};
+let ME = null;
+const can = {
+  get edit(){ return !!ME && ["owner","admin","editor"].indexOf(ME.role) > -1; },
+  get admin(){ return !!ME && ["owner","admin"].indexOf(ME.role) > -1; }
+};
+
+const now0 = new Date();
+const ui = {
+  page:"permits", view:"year", year:now0.getFullYear(), month:new Date(now0.getFullYear(), now0.getMonth(), 1),
+  props:[], tType:"all", tStatus:"all", tStage:"all", tDateBy:"expiry", tFrom:"", tTo:"",
+  sort:{key:"expiry", dir:1}, editing:null, renewing:false
+};
+
+/* ---------------- helpers ---------------- */
+function okColor(c, i){ return (typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c)) ? c : PALETTE[(i||0) % PALETTE.length]; }
+function esc(s){ return String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function cap(s){ s = String(s || ""); return s.charAt(0).toUpperCase() + s.slice(1); }
+function pad(n){ return String(n).padStart(2,"0"); }
+function iso(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function parse(s){ const a = s.split("-").map(Number); return new Date(a[0], a[1]-1, a[2]); }
+function addMonths(d, n){
+  const r = new Date(d.getFullYear(), d.getMonth()+n, 1);
+  const last = new Date(r.getFullYear(), r.getMonth()+1, 0).getDate();
+  r.setDate(Math.min(d.getDate(), last));
+  return r;
+}
+function expiryOf(p){
+  if (p.term === "Custom") return p.customExpiry || p.issued;
+  return iso(addMonths(parse(p.issued), TERM_MONTHS[p.term] || 12));
+}
+function fmt(s){ return parse(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); }
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function status(p){
+  const days = Math.round((parse(expiryOf(p)) - parse(iso(new Date()))) / 864e5);
+  if (days < 0) return {key:"expired", days, label:"Expired "+(-days)+(days===-1?" day":" days")+" ago"};
+  if (days === 0) return {key:"soon", days, label:"Expires today"};
+  if (days <= prefs.soonDays) return {key:"soon", days, label:days+(days===1?" day":" days")+" left"};
+  return {key:"active", days, label:days+" days left"};
+}
+function findProp(name){
+  const n = String(name).trim().toLowerCase();
+  return S.properties.filter((p) => p.name.toLowerCase() === n)[0];
+}
+function propColor(name){ const p = S.properties.filter((x) => x.name === name)[0]; return p ? p.color : "#5c6b7a"; }
+function nextColor(){
+  const used = S.properties.map((p) => p.color.toLowerCase());
+  for (let i = 0; i < COLOR_ORDER.length; i++){ const c = PALETTE[COLOR_ORDER[i]]; if (used.indexOf(c) < 0) return c; }
+  return PALETTE[COLOR_ORDER[S.properties.length % COLOR_ORDER.length]];
+}
+function countBy(field, val){ return S.permits.filter((p) => p[field] === val).length; }
+function findPermit(id){ return S.permits.filter((p) => p.id === id)[0]; }
+function safeDriveUrl(u){
+  try {
+    const x = new URL(String(u).trim());
+    if (x.protocol !== "https:") return null;
+    if (["drive.google.com","docs.google.com"].indexOf(x.hostname) < 0) return null;
+    return x.href;
+  } catch (e) { return null; }
+}
+
+let toastT;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 4200);
+}
+function applyTheme(){
+  const r = document.documentElement;
+  if (prefs.theme === "light" || prefs.theme === "dark") r.setAttribute("data-theme", prefs.theme); else r.removeAttribute("data-theme");
+}
+function fail(what){ return (e) => { console.error(what, e); toast(what + ": " + (e && (e.code || e.message) || "unknown error")); }; }
+
+/* ---------------- gate (sign-in states) ---------------- */
+function showGate(kind, extra){
+  $("#gate").classList.remove("hidden");
+  $("#app").classList.add("locked");
+  let h = "";
+  if (kind === "setup"){
+    h = '<h2>Setup needed</h2><p>Open <code>firebase-config.js</code> and fill in your Firebase settings and owner email, then redeploy.</p>'+
+      '<ol><li>Create a Firebase project</li><li>Turn on Google sign-in and Firestore</li><li>Copy the web app config into <code>firebase-config.js</code></li></ol>';
+  } else if (kind === "signin"){
+    h = '<h2>Permit tracker</h2><p>Sign in with your Google account to continue.</p><button type="button" class="btn primary" data-signin>Sign in with Google</button>';
+  } else if (kind === "noaccess"){
+    h = '<h2>No access yet</h2><p>You’re signed in as <span class="email">'+esc(extra)+'</span>, but this email isn’t on the team list. Ask the owner to add it under Team access.</p>'+
+      '<button type="button" class="btn" data-signout>Sign out</button>';
+  } else if (kind === "error"){
+    h = '<h2>Something went wrong</h2><p>'+esc(extra)+'</p><button type="button" class="btn" data-signout>Sign out</button>';
+  } else {
+    h = '<h2>Loading…</h2>';
+  }
+  $("#gateBody").innerHTML = h;
+}
+function hideGate(){ $("#gate").classList.add("hidden"); $("#app").classList.remove("locked"); }
+
+/* ---------------- firebase ---------------- */
+let app, auth, db;
+let memberUnsub = null, dataUnsubs = [], dataStarted = false, bootstrapped = false;
+let rq = 0;
+function scheduleRender(){ if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
+
+async function signIn(){
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({prompt:"select_account"});
+  try { await signInWithPopup(auth, provider); }
+  catch (e){
+    if (e.code === "auth/popup-blocked") { signInWithRedirect(auth, provider); }
+    else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") toast("Sign-in failed: " + (e.code || e.message));
+  }
+}
+
+function stopData(){
+  dataUnsubs.forEach((f) => { try { f(); } catch (e) {} });
+  dataUnsubs = []; dataStarted = false;
+  S.permits = []; S.properties = []; S.team = []; S.types = DEFAULT_TYPES.slice();
+  Object.keys(ready).forEach((k) => ready[k] = false);
+}
+
+function startData(){
+  if (dataStarted) return;
+  dataStarted = true;
+  dataUnsubs.push(onSnapshot(collection(db, "permits"), (s) => {
+    S.permits = s.docs.map((d) => Object.assign({id:d.id}, d.data()))
+      .filter((p) => p.issued && p.term && p.type && p.property);
+    ready.permits = true; scheduleRender();
+  }, fail("Couldn’t load permits")));
+  dataUnsubs.push(onSnapshot(collection(db, "properties"), (s) => {
+    S.properties = s.docs.map((d, i) => ({id:d.id, name:String(d.data().name || ""), color:okColor(d.data().color, i)}))
+      .filter((p) => p.name)
+      .sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
+    ready.properties = true; scheduleRender();
+  }, fail("Couldn’t load properties")));
+  dataUnsubs.push(onSnapshot(doc(db, "config", "main"), (s) => {
+    const t = s.exists() ? s.data().types : null;
+    S.types = (Array.isArray(t) && t.length) ? t.map(String) : DEFAULT_TYPES.slice();
+    ready.config = true; scheduleRender();
+  }, fail("Couldn’t load settings")));
+  dataUnsubs.push(onSnapshot(collection(db, "members"), (s) => {
+    S.team = s.docs.map((d) => Object.assign({email:d.id}, d.data()));
+    ready.members = true; scheduleRender();
+  }, fail("Couldn’t load team")));
+}
+
+async function bootstrap(user){
+  try {
+    const email = user.email.toLowerCase();
+    const b = writeBatch(db);
+    b.set(doc(db, "config", "main"), {types:DEFAULT_TYPES, createdAt:serverTimestamp()});
+    b.set(doc(db, "members", email), {email, name:user.displayName || email, role:"owner", addedAt:serverTimestamp()});
+    await b.commit();
+  } catch (e){
+    console.error(e);
+    showGate("error", "Couldn’t set up the owner account (" + (e.code || e.message) + "). Check that the owner email in firestore.rules matches the one in firebase-config.js, and that you published the rules.");
+  }
+}
+
+function onUser(user){
+  if (memberUnsub){ memberUnsub(); memberUnsub = null; }
+  stopData(); ME = null; bootstrapped = false;
+  if (!user){ showGate("signin"); return; }
+  const email = String(user.email || "").toLowerCase();
+  showGate("loading");
+  memberUnsub = onSnapshot(doc(db, "members", email), (snap) => {
+    if (snap.exists()){
+      const d = snap.data();
+      ME = {email, name:d.name || user.displayName || email, role:d.role || "viewer"};
+      hideGate(); startData(); scheduleRender();
+    } else if (email === OWNER){
+      if (!bootstrapped){ bootstrapped = true; bootstrap(user); }
+    } else {
+      ME = null; stopData(); showGate("noaccess", email);
+    }
+  }, (e) => { showGate("error", e.code === "permission-denied" ? "Access was denied. Check that the Firestore rules were published." : (e.message || String(e))); });
+}
+
+/* ---------------- filters ---------------- */
+function propFiltered(){
+  return ui.props.length ? S.permits.filter((p) => ui.props.indexOf(p.property) > -1) : S.permits;
+}
+function tableList(){
+  let list = propFiltered();
+  if (ui.tType !== "all") list = list.filter((p) => p.type === ui.tType);
+  if (ui.tStatus !== "all") list = list.filter((p) => status(p).key === ui.tStatus);
+  if (ui.tStage !== "all") list = list.filter((p) => ui.tStage === "none" ? !p.stage : p.stage === ui.tStage);
+  if (ui.tFrom || ui.tTo){
+    list = list.filter((p) => {
+      const d = ui.tDateBy === "issued" ? p.issued : expiryOf(p);
+      if (ui.tFrom && d < ui.tFrom) return false;
+      if (ui.tTo && d > ui.tTo) return false;
+      return true;
+    });
+  }
+  return list;
+}
+
+/* ---------------- master render ---------------- */
+const TITLES = {permits:"Permits", dashboard:"Dashboard", settings:"Settings", team:"Team access"};
+function render(){
+  if (!ME) return;
+  $("#app").classList.toggle("collapsed", !!prefs.collapsed);
+  $("#collapseBtn").setAttribute("aria-expanded", String(!prefs.collapsed));
+  $("#collapseBtn").title = prefs.collapsed ? "Expand sidebar" : "Collapse sidebar";
+  $$(".nav[data-page]").forEach((b) => {
+    if (b.dataset.page === ui.page) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  $("#uAvatar").textContent = (ME.name || ME.email).trim().charAt(0).toUpperCase();
+  $("#uName").textContent = ME.name || ME.email;
+  $("#uName").title = ME.email;
+  $("#uRole").textContent = cap(ME.role);
+  $("#addBtn").classList.toggle("hidden", !can.edit);
+  $("#fab").classList.toggle("hidden", !can.edit || ui.page === "settings" || ui.page === "team");
+  $("#pageTitle").textContent = TITLES[ui.page];
+  $("#viewSeg").classList.toggle("hidden", ui.page !== "permits");
+  $("#pgPermits").classList.toggle("hidden", ui.page !== "permits");
+  $("#pgDash").classList.toggle("hidden", ui.page !== "dashboard");
+  $("#pgSettings").classList.toggle("hidden", ui.page !== "settings");
+  $("#pgTeam").classList.toggle("hidden", ui.page !== "team");
+  if (ui.page === "permits") renderPermits();
+  else if (ui.page === "dashboard") renderDash();
+  else if (ui.page === "settings") renderSettings();
+  else renderTeam();
+}
+
+function renderPermits(){
+  $$("#viewSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === ui.view)));
+  renderImportBanner();
+  renderSummary();
+  renderChips();
+  const cal = ui.view !== "table";
+  $("#calHead").classList.toggle("hidden", !cal);
+  $("#legend").classList.toggle("hidden", !cal);
+  $("#yearView").classList.toggle("hidden", ui.view !== "year");
+  $("#monthView").classList.toggle("hidden", ui.view !== "month");
+  $("#tabView").classList.toggle("hidden", ui.view !== "table");
+  if (ui.view === "year") renderYear();
+  else if (ui.view === "month") renderMonth();
+  else renderTable();
+}
+
+function renderSummary(){
+  const el = $("#summary");
+  if (!ready.permits){ el.innerHTML = "<span>Loading permits…</span>"; return; }
+  const list = propFiltered(), c = {expired:0, soon:0, active:0};
+  list.forEach((p) => c[status(p).key]++);
+  if (!list.length){ el.innerHTML = "<span>No permits tracked yet</span>"; return; }
+  el.innerHTML =
+    '<span><i class="dot expired"></i><b>'+c.expired+'</b> expired</span>'+
+    '<span><i class="dot soon"></i><b>'+c.soon+'</b> due within '+prefs.soonDays+' days</span>'+
+    '<span><i class="dot active"></i><b>'+c.active+'</b> active</span>';
+}
+
+function renderChips(){
+  const box = $("#propChips");
+  ui.props = ui.props.filter((n) => !!findProp(n));
+  if (!S.properties.length){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  const counts = {}; S.permits.forEach((p) => { counts[p.property] = (counts[p.property]||0)+1; });
+  let html = '<button type="button" class="pchip all'+(ui.props.length===0?' on':'')+'" data-prop="__all" aria-pressed="'+(ui.props.length===0)+'">All <span class="n">'+S.permits.length+'</span></button>';
+  S.properties.forEach((p) => {
+    const on = ui.props.indexOf(p.name) > -1;
+    html += '<button type="button" class="pchip'+(on?' on':'')+'" data-prop="'+esc(p.name)+'" aria-pressed="'+on+'" style="--c:'+p.color+'"><i></i>'+esc(p.name)+' <span class="n">'+(counts[p.name]||0)+'</span></button>';
+  });
+  box.innerHTML = html;
+}
+
+/* ---------- import from browser (earlier single-file version) ---------- */
+function readLocalOld(){
+  try {
+    if (localStorage.getItem(IMPORTED_KEY)) return null;
+    for (let i = 0; i < OLD_KEYS.length; i++){
+      const raw = localStorage.getItem(OLD_KEYS[i]);
+      if (!raw) continue;
+      const d = JSON.parse(raw);
+      if (d && Array.isArray(d.permits) && d.permits.length) return d;
+    }
+  } catch (e) {}
+  return null;
+}
+function renderImportBanner(){
+  const el = $("#importBanner");
+  const d = (can.edit && ready.permits) ? readLocalOld() : null;
+  if (!d){ el.classList.add("hidden"); return; }
+  el.classList.remove("hidden");
+  el.innerHTML = '<span>Found <b>'+d.permits.length+'</b> '+(d.permits.length===1?'permit':'permits')+' saved in this browser from the earlier version. Import them into the shared tracker?</span>'+
+    '<span class="b-act"><button type="button" class="btn primary sm" id="importBtn">Import</button><button type="button" class="btn sm" id="importDismiss">Dismiss</button></span>';
+}
+async function importLocal(){
+  const d = readLocalOld(); if (!d) return;
+  try {
+    const props = {};
+    S.properties.forEach((p) => { props[p.name.toLowerCase()] = p.name; });
+    const ops = [];
+    let types = S.types.slice(), typesChanged = false;
+    (Array.isArray(d.properties) ? d.properties : []).forEach((p, i) => {
+      const name = String(typeof p === "string" ? p : p.name || "").trim(); if (!name) return;
+      if (props[name.toLowerCase()]) return;
+      props[name.toLowerCase()] = name;
+      ops.push({ref:doc(collection(db, "properties")), data:{name, color:okColor(typeof p === "string" ? null : p.color, S.properties.length + i), createdAt:serverTimestamp()}});
+    });
+    d.permits.forEach((p) => {
+      if (!p || !p.type || !p.property || !p.issued || !p.term) return;
+      const pn = String(p.property).trim();
+      if (!props[pn.toLowerCase()]){
+        props[pn.toLowerCase()] = pn;
+        ops.push({ref:doc(collection(db, "properties")), data:{name:pn, color:PALETTE[COLOR_ORDER[ops.length % COLOR_ORDER.length]], createdAt:serverTimestamp()}});
+      }
+      if (types.indexOf(p.type) < 0){ types.push(String(p.type)); typesChanged = true; }
+      ops.push({ref:doc(collection(db, "permits")), data:{
+        type:String(p.type), property:props[pn.toLowerCase()], issued:p.issued, term:p.term,
+        customExpiry:p.term === "Custom" ? (p.customExpiry || null) : null,
+        priority:PR_RANK[p.priority] !== undefined ? p.priority : "Medium",
+        scans:[], history:[], createdAt:serverTimestamp(), createdBy:ME.email, updatedAt:serverTimestamp(), updatedBy:ME.email
+      }});
+    });
+    if (typesChanged) ops.push({ref:doc(db, "config", "main"), data:{types}, merge:true});
+    for (let i = 0; i < ops.length; i += 400){
+      const b = writeBatch(db);
+      ops.slice(i, i+400).forEach((o) => { if (o.merge) b.set(o.ref, o.data, {merge:true}); else b.set(o.ref, o.data); });
+      await b.commit();
+    }
+    try { localStorage.setItem(IMPORTED_KEY, "1"); } catch (e) {}
+    toast("Imported " + d.permits.length + (d.permits.length === 1 ? " permit" : " permits"));
+    scheduleRender();
+  } catch (e){ fail("Import failed")(e); }
+}
+
+/* ---------------- year view ---------------- */
+function eventsByDate(list){
+  const ev = {};
+  list.forEach((p) => {
+    (ev[p.issued] = ev[p.issued] || []).push({p, kind:"iss"});
+    const e = expiryOf(p);
+    (ev[e] = ev[e] || []).push({p, kind:"exp"});
+  });
+  Object.keys(ev).forEach((k) => { ev[k].sort((a,b) => (a.kind==="exp"?0:1) - (b.kind==="exp"?0:1)); });
+  return ev;
+}
+function dotsHTML(list){
+  const MAX = 4;
+  return list.slice(0, MAX).map((e) => '<i class="d '+e.kind+'" style="--c:'+propColor(e.p.property)+'"></i>').join("") + (list.length > MAX ? '<b class="dp">+</b>' : "");
+}
+function renderYear(){
+  const y = ui.year;
+  $("#calLabel").textContent = y;
+  const ev = eventsByDate(propFiltered()), today = iso(new Date());
+  let html = "";
+  for (let m = 0; m < 12; m++){
+    const first = new Date(y, m, 1), dim = new Date(y, m+1, 0).getDate();
+    html += '<section class="mini"><h3><button type="button" class="mname" data-m="'+m+'">'+first.toLocaleDateString(undefined,{month:"long"})+'</button></h3>'+
+      '<div class="mdow">'+["S","M","T","W","T","F","S"].map((c) => "<span>"+c+"</span>").join("")+'</div><div class="mgrid">';
+    for (let b = 0; b < first.getDay(); b++) html += "<span></span>";
+    for (let d = 1; d <= dim; d++){
+      const key = y+"-"+pad(m+1)+"-"+pad(d), list = ev[key] || [], has = list.length > 0;
+      const cls = "yd"+(key===today?" today":"")+(has?" has":"");
+      if (has){
+        html += '<button type="button" class="'+cls+'" data-date="'+key+'" aria-label="'+esc(parse(key).toLocaleDateString(undefined,{month:"long",day:"numeric"})+": "+list.length+(list.length===1?" event":" events"))+'"><span class="yn">'+d+'</span><span class="dots">'+dotsHTML(list)+'</span></button>';
+      } else {
+        html += '<div class="'+cls+'"><span class="yn">'+d+'</span></div>';
+      }
+    }
+    html += "</div></section>";
+  }
+  $("#yearGrid").innerHTML = html;
+}
+
+/* ---------------- month view ---------------- */
+function chipHTML(e, opts){
+  opts = opts || {};
+  const word = e.kind === "exp" ? "Expires" : "Issued";
+  const label = (opts.prefix ? word+": " : "") + e.p.type;
+  const aria = word+": "+e.p.type+", "+e.p.property+", "+e.p.priority+" priority"+(e.p.stage ? ", "+e.p.stage : "");
+  return '<button type="button" class="chip '+e.kind+'" data-id="'+esc(e.p.id)+'" style="--c:'+propColor(e.p.property)+'" aria-label="'+esc(aria)+'" title="'+esc(word+": "+e.p.type+" ("+e.p.property+", "+e.p.priority+(e.p.stage ? ", "+e.p.stage : "")+")")+'">'+
+    '<i class="mk"></i><span class="label">'+esc(label)+'</span>'+
+    (opts.sub ? '<span class="sub">'+esc(opts.sub)+'</span>' : (e.p.priority === "High" ? '<span class="hi" aria-hidden="true">!</span>' : ''))+'</button>';
+}
+function renderMonth(){
+  const m = ui.month;
+  $("#calLabel").textContent = m.toLocaleDateString(undefined,{month:"long", year:"numeric"});
+  const first = new Date(m.getFullYear(), m.getMonth(), 1);
+  const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+  const weeks = Math.ceil((first.getDay() + dim) / 7);
+  const cur = new Date(first); cur.setDate(1 - first.getDay());
+  const ev = eventsByDate(propFiltered()), today = iso(new Date());
+  let html = "";
+  for (let w = 0; w < weeks; w++){
+    html += '<div class="week">';
+    for (let i = 0; i < 7; i++){
+      const key = iso(cur), list = ev[key] || [], other = cur.getMonth() !== m.getMonth();
+      const MAX = 3, shown = list.slice(0, MAX);
+      html += '<div class="day'+(other?' other':'')+(key===today?' today':'')+(list.length?' has':'')+'" data-date="'+key+'">'+
+        '<span class="num">'+cur.getDate()+'</span><div class="evs">'+
+        shown.map((e) => chipHTML(e)).join("")+
+        (list.length > MAX ? '<button type="button" class="more" data-day="'+key+'">+'+(list.length-MAX)+' more</button>' : '')+
+        '</div></div>';
+      cur.setDate(cur.getDate()+1);
+    }
+    html += '</div>';
+  }
+  $("#weeks").innerHTML = html;
+  renderAgenda();
+}
+
+function renderAgenda(){
+  const m = ui.month, pre = m.getFullYear() + "-" + pad(m.getMonth() + 1) + "-";
+  const ev = eventsByDate(propFiltered());
+  const keys = Object.keys(ev).filter((k) => k.indexOf(pre) === 0).sort();
+  let html = '<h3>Dates this month</h3>';
+  if (!keys.length) html += '<p class="muted" style="margin:0">Nothing issued or expiring this month.</p>';
+  keys.forEach((k) => ev[k].forEach((e) => {
+    const d = parse(k);
+    html += '<button type="button" class="agrow '+e.kind+'" data-id="'+esc(e.p.id)+'" style="--c:'+propColor(e.p.property)+'">'+
+      '<span class="ad"><b>'+d.getDate()+'</b><small>'+d.toLocaleDateString(undefined,{weekday:"short"})+'</small></span>'+
+      '<span class="at"><b>'+esc(e.p.type)+'</b><small>'+esc(e.p.property)+'</small></span>'+
+      '<span class="ak"><i class="mkk"></i>'+(e.kind === "exp" ? "Expires" : "Issued")+'</span></button>';
+  }));
+  $("#monthAgenda").innerHTML = html;
+}
+
+/* ---------------- table view ---------------- */
+const COLS = [
+  {key:"type", label:"Permit"}, {key:"property", label:"Property"}, {key:"issued", label:"Issued"},
+  {key:"expiry", label:"Expires"}, {key:"term", label:"Term"}, {key:"priority", label:"Priority"}, {key:"stage", label:"Stage"}, {key:"status", label:"Status"}
+];
+const CLIP = '<svg class="clip" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+function sortVal(p, key){
+  switch (key){
+    case "expiry": return expiryOf(p);
+    case "priority": return PR_RANK[p.priority];
+    case "status": return status(p).days;
+    default: return String(p[key] == null ? "" : p[key]).toLowerCase();
+  }
+}
+function syncTools(){
+  const types = S.types.slice();
+  S.permits.forEach((p) => { if (types.indexOf(p.type) < 0) types.push(p.type); });
+  if (ui.tType !== "all" && types.indexOf(ui.tType) < 0) ui.tType = "all";
+  $("#tfType").innerHTML = '<option value="all">All permit types</option>' + types.map((t) => "<option>"+esc(t)+"</option>").join("");
+  $("#tfType").value = ui.tType;
+  $("#tfStatus").value = ui.tStatus;
+  $("#tfStage").value = ui.tStage;
+  const sk = ui.sort.key + ":" + ui.sort.dir;
+  $("#sortSel").value = Array.from($("#sortSel").options).some((o) => o.value === sk) ? sk : "";
+  $("#tfBy").value = ui.tDateBy;
+  $("#tfFrom").value = ui.tFrom;
+  $("#tfTo").value = ui.tTo;
+}
+function renderTable(){ syncTools(); renderTableBody(); }
+function renderTableBody(){
+  $("#thead").innerHTML = COLS.map((c) => {
+    const active = ui.sort.key === c.key;
+    const arrow = active ? (ui.sort.dir === 1 ? "↑" : "↓") : "";
+    return '<th scope="col" aria-sort="'+(active ? (ui.sort.dir===1?"ascending":"descending") : "none")+'"><button type="button" data-sort="'+c.key+'" data-active="'+active+'">'+c.label+' <span class="ar">'+arrow+'</span></button></th>';
+  }).join("");
+  const list = tableList().slice().sort((a,b) => {
+    const x = sortVal(a, ui.sort.key), y = sortVal(b, ui.sort.key);
+    let r = x < y ? -1 : x > y ? 1 : 0;
+    if (r === 0) r = expiryOf(a) < expiryOf(b) ? -1 : 1;
+    return r * ui.sort.dir;
+  });
+  $("#tbody").innerHTML = list.map((p) => {
+    const s = status(p), n = (p.scans || []).length;
+    return '<tr tabindex="0" data-id="'+esc(p.id)+'">'+
+      '<td class="type">'+esc(p.type)+(n ? CLIP.replace('<svg ', '<svg role="img" aria-label="'+n+(n===1?' scan':' scans')+'" ') : '')+'</td>'+
+      '<td><span class="pdot" style="--c:'+propColor(p.property)+'"><i></i>'+esc(p.property)+'</span></td>'+
+      '<td>'+fmt(p.issued)+'</td>'+
+      '<td>'+fmt(expiryOf(p))+'</td>'+
+      '<td>'+esc(p.term)+'</td>'+
+      '<td><span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></td>'+
+      '<td>'+(p.stage ? '<span class="tag '+esc(p.stage)+'" style="margin-left:0">'+esc(p.stage)+'</span>' : '<span class="muted">-</span>')+'</td>'+
+      '<td><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></td></tr>';
+  }).join("");
+  $("#cardList").innerHTML = list.map((p) => {
+    const s = status(p), n = (p.scans || []).length;
+    return '<button type="button" class="pcard" data-id="'+esc(p.id)+'" style="--c:'+propColor(p.property)+'">'+
+      '<div class="r1"><b>'+esc(p.type)+(n ? CLIP : '')+'</b><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></div>'+
+      '<div class="r2">'+esc(p.property)+(p.stage ? '<span class="tag '+esc(p.stage)+'">'+esc(p.stage)+'</span>' : '')+'</div>'+
+      '<div class="r3"><span>Issued <b>'+fmt(p.issued)+'</b></span><span>Expires <b>'+fmt(expiryOf(p))+'</b></span>'+
+      '<span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></div></button>';
+  }).join("");
+  const total = S.permits.length;
+  const countText = list.length + " of " + total + (total === 1 ? " permit" : " permits");
+  $("#tabCount").textContent = countText;
+  $("#tabCountM").textContent = countText;
+  let nf = 0;
+  if (ui.props.length) nf++;
+  if (ui.tType !== "all") nf++;
+  if (ui.tStatus !== "all") nf++;
+  if (ui.tStage !== "all") nf++;
+  if (ui.tFrom || ui.tTo) nf++;
+  $("#filterToggle").textContent = "Filters" + (nf ? " (" + nf + ")" : "");
+  const empty = $("#tabEmpty");
+  if (!list.length){
+    empty.classList.remove("hidden");
+    $("#permitTable").classList.add("hidden");
+    if (!ready.permits) empty.innerHTML = '<p>Loading permits…</p>';
+    else if (total) empty.innerHTML = '<p>No permits match these filters.</p><button type="button" class="btn" data-clear>Clear filters</button>';
+    else empty.innerHTML = '<p>No permits yet.'+(can.edit ? ' Add one to track its issuance and expiry dates.' : '')+'</p>'+(can.edit ? '<button type="button" class="btn primary" data-add>Add permit</button>' : '');
+  } else {
+    empty.classList.add("hidden");
+    $("#permitTable").classList.remove("hidden");
+  }
+}
+function clearFilters(){
+  ui.props = []; ui.tType = "all"; ui.tStatus = "all"; ui.tStage = "all"; ui.tDateBy = "expiry"; ui.tFrom = ""; ui.tTo = "";
+  render();
+}
+function buildPrintHead(){
+  const parts = [], list = tableList();
+  if (ui.props.length) parts.push("Property: " + ui.props.join(", "));
+  if (ui.tType !== "all") parts.push("Permit: " + ui.tType);
+  if (ui.tStatus !== "all") parts.push("Status: " + {expired:"Expired", soon:"Due soon", active:"Active"}[ui.tStatus]);
+  if (ui.tStage !== "all") parts.push("Stage: " + (ui.tStage === "none" ? "Not set" : ui.tStage));
+  if (ui.tFrom || ui.tTo) parts.push((ui.tDateBy === "issued" ? "Issued" : "Expires") + (ui.tFrom ? " from " + fmt(ui.tFrom) : "") + (ui.tTo ? " to " + fmt(ui.tTo) : ""));
+  $("#printMeta").textContent = "Printed " + new Date().toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) +
+    ". " + list.length + (list.length === 1 ? " permit" : " permits") + ". " + (parts.length ? "Filters: " + parts.join("; ") + "." : "No filters applied.");
+}
+window.addEventListener("beforeprint", buildPrintHead);
+
+/* ---------------- dashboard ---------------- */
+function renderDash(){
+  const el = $("#pgDash"), all = S.permits;
+  if (!all.length){
+    el.innerHTML = '<div class="card empty" style="margin-top:18px"><p>'+(ready.permits ? 'Nothing to show yet.'+(can.edit ? ' Add your first permit to see expiries and a breakdown by property.' : '') : 'Loading…')+'</p>'+(ready.permits && can.edit ? '<button type="button" class="btn primary" data-add>Add permit</button>' : '')+'</div>';
+    return;
+  }
+  const c = {expired:0, soon:0, active:0};
+  all.forEach((p) => c[status(p).key]++);
+  let html = '<div class="stats">'+
+    '<div class="stat"><div class="sn">'+all.length+'</div><div class="sl">Total permits</div></div>'+
+    '<div class="stat"><div class="sn">'+c.expired+'</div><div class="sl"><i class="dot expired"></i>Expired</div></div>'+
+    '<div class="stat"><div class="sn">'+c.soon+'</div><div class="sl"><i class="dot soon"></i>Due within '+prefs.soonDays+' days</div></div>'+
+    '<div class="stat"><div class="sn">'+c.active+'</div><div class="sl"><i class="dot active"></i>Active</div></div></div>';
+  const attention = all.filter((p) => status(p).key !== "active").sort((a,b) => status(a).days - status(b).days).slice(0, 8);
+  html += '<div class="dgrid"><div class="card"><h2>Needs attention</h2>';
+  if (!attention.length) html += '<p class="muted" style="margin:0">Nothing is expired or due soon.</p>';
+  attention.forEach((p) => {
+    const s = status(p);
+    html += '<button type="button" class="arow" data-id="'+esc(p.id)+'" style="--c:'+propColor(p.property)+'"><i></i>'+
+      '<span class="t"><b>'+esc(p.type)+'</b><small>'+esc(p.property)+', '+fmt(expiryOf(p))+'</small></span>'+
+      '<span class="s st '+s.key+'"><i></i>'+esc(s.label)+'</span></button>';
+  });
+  html += '</div><div class="card"><h2>By property</h2>';
+  S.properties.forEach((pr) => {
+    const mine = all.filter((p) => p.property === pr.name);
+    if (!mine.length) return;
+    const ex = mine.filter((p) => status(p).key === "expired").length;
+    const so = mine.filter((p) => status(p).key === "soon").length;
+    const note = [];
+    if (ex) note.push(ex + " expired");
+    if (so) note.push(so + " due soon");
+    html += '<div class="brow" style="--c:'+pr.color+'"><div class="bt"><span><i></i>'+esc(pr.name)+'</span><span>'+mine.length+'</span></div>'+
+      '<div class="bar"><b style="width:'+Math.round(mine.length/all.length*100)+'%"></b></div>'+
+      (note.length ? '<small>'+note.join(", ")+'</small>' : '')+'</div>';
+  });
+  html += '</div></div>';
+  const months = [], base = startOfMonth(new Date());
+  let max = 1;
+  for (let i = 0; i < 12; i++){
+    const m = new Date(base.getFullYear(), base.getMonth()+i, 1), by = {};
+    let tot = 0;
+    all.forEach((p) => {
+      const e = parse(expiryOf(p));
+      if (e.getFullYear() === m.getFullYear() && e.getMonth() === m.getMonth()){ by[p.property] = (by[p.property]||0)+1; tot++; }
+    });
+    months.push({m, by, tot}); if (tot > max) max = tot;
+  }
+  html += '<div class="card"><h2>Expiries in the next 12 months</h2><div class="bars">';
+  months.forEach((x) => {
+    const label = x.m.toLocaleDateString(undefined,{month:"short"});
+    const seg = Object.keys(x.by).map((n) => '<div title="'+esc(n+": "+x.by[n])+'" style="flex:'+x.by[n]+';background:'+propColor(n)+'"></div>').join("");
+    html += '<div class="bcol"><div class="bwrap">'+(x.tot ? '<div class="bstack" style="height:'+Math.round(x.tot/max*100)+'%">'+seg+'</div>' : '')+'</div><div class="bl"><b>'+(x.tot||"")+'</b>'+label+'</div></div>';
+  });
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+/* ---------------- color picker (20 presets + custom) ---------------- */
+function cpickInner(value, label){
+  value = okColor(value, 0);
+  const v = value.toLowerCase(), inPal = PALETTE.some((c) => c === v);
+  return '<button type="button" class="cswatch" data-ctrigger aria-expanded="false" aria-label="'+esc(label)+'" style="background:'+value+'"></button>'+
+    '<div class="cpanel hidden" role="group" aria-label="Choose a color">'+
+    PALETTE.map((c) => '<button type="button" class="pk'+(c === v ? ' sel' : '')+'" data-c="'+c+'" style="--c:'+c+'" aria-label="Color '+c+'"></button>').join("")+
+    '<label class="pk custom'+(inPal ? '' : ' sel')+'" title="Custom color"><input type="color" value="'+value+'" aria-label="Custom color"></label></div>';
+}
+function cpickHTML(value, label){ return '<div class="cpick" data-value="'+okColor(value,0)+'">'+cpickInner(value, label)+'</div>'; }
+function setPick(box, value){
+  value = okColor(value, 0);
+  const v = value.toLowerCase();
+  let found = false;
+  box.dataset.value = value;
+  box.querySelector(".cswatch").style.background = value;
+  Array.from(box.querySelectorAll(".pk[data-c]")).forEach((b) => {
+    const on = b.dataset.c === v; b.classList.toggle("sel", on); if (on) found = true;
+  });
+  const cu = box.querySelector(".pk.custom");
+  cu.classList.toggle("sel", !found);
+  cu.querySelector("input").value = value;
+}
+function closePanels(except){
+  Array.from(document.querySelectorAll(".cpanel:not(.hidden)")).forEach((p) => {
+    if (p === except) return;
+    p.classList.add("hidden");
+    const t = p.previousElementSibling; if (t) t.setAttribute("aria-expanded", "false");
+  });
+}
+
+/* ---------------- settings ---------------- */
+function renderSettings(){
+  const ed = can.edit;
+  $("#acctEmail").textContent = ME.email;
+  $("#acctRole").textContent = cap(ME.role) + " access";
+  $("#propList").innerHTML = S.properties.length ? S.properties.map((p) => {
+    const n = countBy("property", p.name);
+    return '<div class="row" data-id="'+esc(p.id)+'">'+
+      (ed ? cpickHTML(p.color, "Change color for "+p.name) : '<i class="swatch-static" style="background:'+p.color+'"></i>')+
+      '<div class="grow"><input type="text" value="'+esc(p.name)+'" data-pname maxlength="60" aria-label="Property name"'+(ed ? '' : ' readonly')+'></div>'+
+      '<span class="cnt">'+n+(n===1?' permit':' permits')+'</span>'+
+      (ed ? '<button type="button" class="btn link danger" data-pdel>Remove</button>' : '')+'</div>';
+  }).join("") : '<p class="muted" style="margin:0">'+(ready.properties ? 'No properties yet.' : 'Loading…')+'</p>';
+  $("#typeList").innerHTML = S.types.map((t, i) => {
+    const n = countBy("type", t);
+    return '<div class="row" data-i="'+i+'"><div class="grow">'+esc(t)+'</div><span class="cnt">'+n+(n===1?' permit':' permits')+'</span>'+
+      (ed ? '<button type="button" class="btn link danger" data-tdel>Remove</button>' : '')+'</div>';
+  }).join("");
+  $("#propAdd").classList.toggle("hidden", !ed);
+  $("#typeAdd").classList.toggle("hidden", !ed);
+  if (ed){
+    const npBox = $("#newPropPick"), npColor = npBox.dataset.value || nextColor();
+    npBox.dataset.value = npColor;
+    npBox.innerHTML = cpickInner(npColor, "Change color for new property");
+  }
+  $("#setSoon").value = String(prefs.soonDays);
+  $("#setTheme").value = prefs.theme;
+}
+
+/* ---------------- team ---------------- */
+function renderTeam(){
+  const list = S.team.slice().sort((a, b) => ((a.role==="owner"?0:1) - (b.role==="owner"?0:1)) || String(a.name||a.email).localeCompare(String(b.name||b.email)));
+  $("#memberList").innerHTML = list.map((m) => {
+    const isOwner = m.role === "owner", isMe = ME && m.email === ME.email;
+    const nm = m.name || m.email;
+    return '<div class="mrow" data-email="'+esc(m.email)+'"><div class="avatar">'+esc(nm.trim().charAt(0).toUpperCase())+'</div>'+
+      '<div class="who"><b>'+esc(nm)+(isMe ? ' <span class="muted">(you)</span>' : '')+'</b><small>'+esc(m.email)+'</small></div>'+
+      ((isOwner || !can.admin)
+        ? '<span class="muted" style="font-size:14px">'+esc(cap(m.role))+'</span>'
+        : '<select data-role aria-label="Role for '+esc(nm)+'">'+["viewer","editor","admin"].map((r) => '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+cap(r)+'</option>').join("")+'</select>')+
+      ((!isOwner && !isMe && can.admin) ? '<button type="button" class="btn link danger" data-mdel>Remove</button>' : '')+'</div>';
+  }).join("") || '<p class="muted">'+(ready.members ? 'No members yet.' : 'Loading…')+'</p>';
+  $("#memberForm").classList.toggle("hidden", !can.admin);
+}
+
+/* ---------------- detail + day dialogs ---------------- */
+const viewDlg = $("#viewDlg");
+function scanLinksHTML(scans){
+  const out = (scans || []).map((s, i) => {
+    const u = safeDriveUrl(s && s.url); if (!u) return "";
+    return '<a class="slink" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(String(s.name || s.label || "").trim() || ("Scan " + (i+1)))+' ↗</a>';
+  }).join("");
+  return out;
+}
+function openDay(key){
+  const list = eventsByDate(propFiltered())[key] || [];
+  $("#viewTitle").textContent = parse(key).toLocaleDateString(undefined,{weekday:"long", month:"long", day:"numeric", year:"numeric"});
+  $("#viewBody").innerHTML = '<div class="dayList">'+list.map((e) => chipHTML(e, {sub:e.p.property, prefix:true})).join("")+'</div><div class="actions"><button type="button" class="btn" data-close>Close</button></div>';
+  if (!viewDlg.open) viewDlg.showModal();
+}
+function openDetail(id){
+  const p = findPermit(id); if (!p) return;
+  const s = status(p), links = scanLinksHTML(p.scans);
+  const hist = (p.history || []).slice().reverse().slice(0, 5).map((h) => {
+    const l = scanLinksHTML(h.scans);
+    return '<div><b>Previous term:</b> '+(h.issued ? fmt(h.issued) : "?")+' to '+(h.expiry ? fmt(h.expiry) : "?")+(l ? '<br>'+l : '')+'</div>';
+  }).join("");
+  $("#viewTitle").textContent = p.type;
+  $("#viewBody").innerHTML =
+    '<dl class="facts">'+
+    '<dt>Property</dt><dd><span class="pdot" style="--c:'+propColor(p.property)+'"><i></i>'+esc(p.property)+'</span></dd>'+
+    '<dt>Issued</dt><dd>'+fmt(p.issued)+'</dd>'+
+    '<dt>Expires</dt><dd>'+fmt(expiryOf(p))+'</dd>'+
+    '<dt>Term</dt><dd>'+esc(p.term)+'</dd>'+
+    '<dt>Priority</dt><dd><span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></dd>'+
+    (p.stage ? '<dt>Stage</dt><dd><span class="tag '+esc(p.stage)+'" style="margin-left:0">'+esc(p.stage)+'</span></dd>' : '')+
+    '<dt>Status</dt><dd><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></dd>'+
+    '<dt>Scans</dt><dd>'+(links || '<span class="muted">None attached</span>')+'</dd>'+
+    '</dl>'+(hist ? '<div class="hist">'+hist+'</div>' : '')+
+    '<div class="actions">'+
+      (can.edit
+        ? '<button type="button" class="btn danger" data-del="'+esc(p.id)+'">Delete</button><span class="spacer"></span>'+
+          '<button type="button" class="btn" data-edit="'+esc(p.id)+'">Edit</button>'+
+          '<button type="button" class="btn primary" data-renew="'+esc(p.id)+'">Renew</button>'
+        : '<span class="spacer"></span><button type="button" class="btn" data-close>Close</button>')+
+    '</div>';
+  if (!viewDlg.open) viewDlg.showModal();
+}
+function focusDate(s){ const d = parse(s); ui.year = d.getFullYear(); ui.month = startOfMonth(d); }
+
+viewDlg.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t === viewDlg){ viewDlg.close(); return; }
+  const btn = t.closest("button"); if (!btn) return;
+  if (btn.hasAttribute("data-close")) viewDlg.close();
+  else if (btn.dataset.edit){ viewDlg.close(); openForm(findPermit(btn.dataset.edit)); }
+  else if (btn.dataset.renew){ const p = findPermit(btn.dataset.renew); viewDlg.close(); openForm(p, {renew:true}); }
+  else if (btn.dataset.del){
+    if (btn.dataset.armed){
+      const dp = findPermit(btn.dataset.del), ids = dp ? fileIdsOf(dp) : [];
+      deleteDoc(doc(db, "permits", btn.dataset.del)).then(() => deleteFiles(ids)).catch(fail("Couldn’t delete"));
+      viewDlg.close(); toast("Permit deleted");
+    } else {
+      btn.dataset.armed = "1"; btn.textContent = "Confirm delete";
+    }
+  }
+  else if (btn.classList.contains("chip") && btn.dataset.id) openDetail(btn.dataset.id);
+});
+
+/* ---------------- add / edit / renew form ---------------- */
+const formDlg = $("#formDlg"), form = $("#form");
+const fType = $("#fType"), fTypeNew = $("#fTypeNew"), fProp = $("#fProp"), fPropNew = $("#fPropNew");
+const fIssued = $("#fIssued"), fTerm = $("#fTerm"), fCustom = $("#fCustom"), fPropPick = $("#fPropPick");
+
+function fillSelect(sel, list, val){
+  sel.innerHTML = '<option value="" disabled>Select…</option>' +
+    list.map((x) => "<option>"+esc(x)+"</option>").join("") +
+    '<option value="__new__">+ Add new…</option>';
+  sel.selectedIndex = 0;
+  if (val && list.indexOf(val) > -1) sel.value = val;
+}
+function syncNewType(){
+  const show = fType.value === "__new__";
+  fTypeNew.classList.toggle("hidden", !show);
+  if (show) fTypeNew.focus();
+}
+function syncNewProp(focus){
+  const show = fProp.value === "__new__";
+  $("#newPropBox").classList.toggle("hidden", !show);
+  if (show && focus) fPropNew.focus();
+}
+function syncTerm(){
+  $("#customRow").classList.toggle("hidden", fTerm.value !== "Custom");
+  updatePreview();
+}
+function previewExpiry(){
+  if (!fIssued.value) return null;
+  if (fTerm.value === "Custom") return fCustom.value || null;
+  return expiryOf({issued:fIssued.value, term:fTerm.value});
+}
+function updatePreview(){
+  const e = previewExpiry();
+  $("#preview").innerHTML = e ? "Expires on <b>"+fmt(e)+"</b>" : "";
+}
+
+function openForm(p, over){
+  if (!can.edit) return;
+  over = over || {};
+  ui.editing = p ? p.id : null;
+  ui.renewing = !!over.renew;
+  $("#formTitle").textContent = over.renew ? "Renew permit" : (p ? "Edit permit" : "Add permit");
+  $("#saveBtn").textContent = over.renew ? "Save renewal" : "Save permit";
+  fillSelect(fType, S.types, p && p.type);
+  fillSelect(fProp, S.properties.map((x) => x.name), p && p.property);
+  if (!S.properties.length) fProp.value = "__new__";
+  fTypeNew.value = ""; fTypeNew.classList.add("hidden");
+  fPropNew.value = "";
+  const nc = nextColor(); fPropPick.dataset.value = nc;
+  fPropPick.innerHTML = cpickInner(nc, "Change property color");
+  syncNewProp(false);
+  fIssued.value = over.renew ? expiryOf(p) : (p ? p.issued : iso(new Date()));
+  fTerm.value = p ? p.term : "Yearly";
+  fCustom.value = (p && p.customExpiry && !over.renew) ? p.customExpiry : "";
+  form.querySelector('input[name="pr"][value="'+(p ? p.priority : "Medium")+'"]').checked = true;
+  $$('input[name="stage"]').forEach((c) => { c.checked = !!p && p.stage === c.value; });
+  formSaved = false; removedExisting = [];
+  setAtts(over.renew ? [] : ((p && p.scans) || []));
+  $("#formErr").textContent = "";
+  syncTerm();
+  formDlg.showModal();
+}
+
+fType.addEventListener("change", syncNewType);
+fProp.addEventListener("change", () => syncNewProp(true));
+fTerm.addEventListener("change", syncTerm);
+fIssued.addEventListener("input", updatePreview);
+fCustom.addEventListener("input", updatePreview);
+$("#cancelForm").addEventListener("click", () => formDlg.close());
+formDlg.addEventListener("click", (e) => {
+  if (e.target === formDlg){ formDlg.close(); return; }
+  if (e.target.closest("#uploadBtn")) $("#fileInput").click();
+  const rm = e.target.closest("[data-rmatt]");
+  if (rm){
+    const k = +rm.closest(".att").dataset.key, i = atts.findIndex((a) => a.key === k);
+    if (i > -1){
+      const a = atts[i]; atts.splice(i, 1);
+      if (a.isNew){ a.dead = true; if (a.id) deleteFiles([a.id]); }
+      else if (a.id) removedExisting.push(a.id);
+      renderAtts();
+    }
+  }
+});
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const err = $("#formErr"); err.textContent = "";
+  if (!can.edit){ err.textContent = "Your role can’t edit permits."; return; }
+  const type = fType.value === "__new__" ? fTypeNew.value.trim() : fType.value;
+  const newProp = fProp.value === "__new__";
+  let prop = newProp ? fPropNew.value.trim() : fProp.value;
+  if (!type){ err.textContent = "Choose or enter a type of permit."; return; }
+  if (!prop){ err.textContent = "Choose or enter a property."; return; }
+  if (!fIssued.value){ err.textContent = "Pick an issuance date."; return; }
+  if (fTerm.value === "Custom"){
+    if (!fCustom.value){ err.textContent = "Pick a custom expiry date."; return; }
+    if (fCustom.value <= fIssued.value){ err.textContent = "Expiry must be after the issuance date."; return; }
+  }
+  if (atts.some((a) => a.status === "uploading")){ err.textContent = "Please wait for the uploads to finish."; return; }
+  const scans = atts.filter((a) => a.status === "done" && safeDriveUrl(a.url))
+    .map((a) => ({id:a.id || null, name:a.name, mime:a.mime || "", size:a.size || 0, url:safeDriveUrl(a.url)}));
+
+  const batch = writeBatch(db);
+  if (S.types.indexOf(type) < 0) batch.set(doc(db, "config", "main"), {types:S.types.concat([type])}, {merge:true});
+  if (newProp){
+    const ex = findProp(prop);
+    if (ex) prop = ex.name;
+    else batch.set(doc(collection(db, "properties")), {name:prop, color:okColor(fPropPick.dataset.value, S.properties.length), createdAt:serverTimestamp()});
+  }
+  const payload = {
+    type, property:prop, issued:fIssued.value, term:fTerm.value,
+    customExpiry: fTerm.value === "Custom" ? fCustom.value : null,
+    priority: form.querySelector('input[name="pr"]:checked').value,
+    stage: (form.querySelector('input[name="stage"]:checked') || {}).value || null,
+    scans, updatedAt:serverTimestamp(), updatedBy:ME.email
+  };
+  const wasEdit = !!ui.editing, wasRenew = ui.renewing;
+  let target;
+  if (wasEdit){
+    const old = findPermit(ui.editing);
+    const upd = Object.assign({}, payload);
+    if (wasRenew && old) upd.history = arrayUnion({renewedOn:iso(new Date()), issued:old.issued, expiry:expiryOf(old), scans:old.scans || []});
+    batch.update(doc(db, "permits", ui.editing), upd);
+    target = Object.assign({}, old, payload);
+  } else {
+    const ref = doc(collection(db, "permits"));
+    batch.set(ref, Object.assign({}, payload, {history:[], createdAt:serverTimestamp(), createdBy:ME.email}));
+    target = Object.assign({id:ref.id}, payload);
+  }
+  const toDelete = removedExisting.slice(); removedExisting = []; formSaved = true;
+  batch.commit().then(() => deleteFiles(toDelete)).catch(fail("Couldn’t save"));
+  if (ui.props.length && ui.props.indexOf(prop) < 0) ui.props.push(prop);
+  formDlg.close();
+  focusDate(target.issued);
+  ui.editing = null; ui.renewing = false;
+  scheduleRender();
+  toast((wasRenew ? "Renewed. " : wasEdit ? "Saved. " : "Added. ") + "Expires " + fmt(expiryOf(target)));
+});
+
+/* ---------------- scan uploads (browser > Netlify function > Google Drive) ---------------- */
+const MAX_BYTES = 15 * 1024 * 1024, RELAY_MAX = 3.5 * 1024 * 1024, MAX_SCANS = 5;
+const OK_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+let atts = [], removedExisting = [], formSaved = false, attSeq = 0;
+
+async function api(body){
+  const user = auth.currentUser;
+  if (!user) throw new Error("You’re signed out. Please sign in again.");
+  const token = await user.getIdToken();
+  let r;
+  try {
+    r = await fetch("/.netlify/functions/drive", {
+      method:"POST",
+      headers:{"Content-Type":"application/json", "Authorization":"Bearer " + token},
+      body:JSON.stringify(body)
+    });
+  } catch (e){ throw new Error("Couldn’t reach the upload service. Check your connection."); }
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok){
+    if (r.status === 404 && !j.error) throw new Error("The upload service isn’t set up on this site yet.");
+    throw new Error(j.error || ("Upload service error (" + r.status + ")"));
+  }
+  return j;
+}
+function fmtSize(n){ return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+function toBase64(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(",")[1] || "");
+    r.onerror = () => rej(new Error("Couldn’t read the file."));
+    r.readAsDataURL(file);
+  });
+}
+async function prepareFile(file){
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 1.5 * 1024 * 1024){ if (bmp.close) bmp.close(); return file; }
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85));
+    if (blob && blob.size < file.size) return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", {type:"image/jpeg"});
+  } catch (e) {}
+  return file;
+}
+function putSession(url, file, onProgress){
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    x.open("PUT", url);
+    x.setRequestHeader("Content-Type", file.type);
+    x.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100)); };
+    x.onload = () => {
+      if (x.status >= 200 && x.status < 300){
+        try { res(JSON.parse(x.responseText)); } catch (e){ rej(new Error("Upload finished but Google’s reply couldn’t be read.")); }
+      } else rej(new Error("Google Drive rejected the upload (" + x.status + ")."));
+    };
+    x.onerror = () => rej(new Error("Network error during upload."));
+    x.send(file);
+  });
+}
+function renderAtts(){
+  $("#attList").innerHTML = atts.map((a) => {
+    const m = a.status === "uploading" ? (a.pct != null ? "Uploading… " + a.pct + "%" : "Uploading…")
+      : a.status === "error" ? a.error : (a.size ? fmtSize(a.size) : "");
+    return '<div class="att'+(a.status === "error" ? ' err' : '')+'" data-key="'+a.key+'"><span class="an" title="'+esc(a.name)+'">'+esc(a.name)+'</span>'+
+      '<span class="am">'+esc(m)+'</span><button type="button" class="btn link danger" data-rmatt aria-label="Remove '+esc(a.name)+'">Remove</button></div>';
+  }).join("");
+  $("#uploadBtn").classList.toggle("hidden", atts.length >= MAX_SCANS);
+  $("#uploadBtn").textContent = atts.length ? "Upload another scan" : "Upload scan";
+}
+function setAtts(list){
+  atts = list.map((s) => ({key:++attSeq, id:s.id || null, name:s.name || s.label || "Scan", mime:s.mime || "", size:s.size || 0, url:s.url, status:"done", isNew:false}));
+  renderAtts();
+}
+async function uploadOne(a, file){
+  try {
+    file = await prepareFile(file);
+    a.name = file.name; a.mime = file.type; a.size = file.size;
+    if (file.size > MAX_BYTES) throw new Error("Over the 15 MB limit.");
+    renderAtts();
+    let res;
+    if (file.size <= RELAY_MAX){
+      res = await api({action:"upload", name:file.name, mime:file.type, data:await toBase64(file)});
+    } else {
+      const s = await api({action:"start", name:file.name, mime:file.type, size:file.size});
+      const f = await putSession(s.sessionUrl, file, (pct) => { a.pct = pct; renderAtts(); });
+      res = {id:f.id, name:f.name, mime:f.mimeType, size:Number(f.size) || file.size, url:f.webViewLink};
+    }
+    a.id = res.id; a.url = res.url; a.name = res.name || a.name; a.size = res.size || a.size; a.status = "done";
+    if (a.dead) deleteFiles([a.id]);
+  } catch (e){
+    a.status = "error"; a.error = e.message || "Upload failed.";
+  }
+  renderAtts();
+}
+function handleFiles(files){
+  files.forEach((f) => {
+    if (atts.length >= MAX_SCANS){ toast("You can attach up to " + MAX_SCANS + " scans per permit."); return; }
+    if (OK_TYPES.indexOf(f.type) < 0){ toast("“" + f.name + "” isn’t a JPG, PNG or PDF."); return; }
+    if (f.type === "application/pdf" && f.size > MAX_BYTES){ toast("“" + f.name + "” is over the 15 MB limit."); return; }
+    const a = {key:++attSeq, id:null, name:f.name, mime:f.type, size:f.size, url:"", status:"uploading", pct:null, isNew:true, dead:false};
+    atts.push(a); renderAtts(); uploadOne(a, f);
+  });
+}
+async function deleteFiles(ids){
+  ids = ids.filter(Boolean);
+  if (!ids.length) return;
+  const res = await Promise.allSettled(ids.map((id) => api({action:"delete", id})));
+  if (res.some((r) => r.status === "rejected")) toast("Some files couldn’t be removed from Drive. You can delete them there manually.");
+}
+function fileIdsOf(p){
+  const ids = [];
+  (p.scans || []).forEach((s) => { if (s && s.id) ids.push(s.id); });
+  (p.history || []).forEach((h) => (h.scans || []).forEach((s) => { if (s && s.id) ids.push(s.id); }));
+  return ids;
+}
+function discardSession(){
+  const ids = [];
+  atts.forEach((a) => { if (a.isNew){ a.dead = true; if (a.id) ids.push(a.id); } });
+  atts = []; removedExisting = [];
+  deleteFiles(ids);
+}
+$("#fileInput").addEventListener("change", (e) => { handleFiles(Array.from(e.target.files || [])); e.target.value = ""; });
+formDlg.addEventListener("close", () => { if (!formSaved) discardSession(); });
+
+/* ---------------- events: navigation + auth ---------------- */
+$$(".nav[data-page]").forEach((b) => {
+  b.addEventListener("click", () => { ui.page = b.dataset.page; render(); window.scrollTo(0,0); });
+});
+$("#collapseBtn").addEventListener("click", () => { prefs.collapsed = !prefs.collapsed; savePrefs(); render(); });
+$("#signOutBtn").addEventListener("click", () => signOut(auth));
+$("#addBtn").addEventListener("click", () => openForm(null));
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-add]")) openForm(null);
+  if (e.target.closest("[data-clear]")) clearFilters();
+  if (e.target.closest("[data-signin]")) signIn();
+  if (e.target.closest("[data-signout]")) signOut(auth);
+  if (e.target.closest("#importBtn")) importLocal();
+  if (e.target.closest("#importDismiss")){ try { localStorage.setItem(IMPORTED_KEY, "1"); } catch (er) {} renderImportBanner(); }
+});
+$("#viewSeg").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-view]"); if (!b) return;
+  ui.view = b.dataset.view; render();
+});
+
+/* color picker interactions */
+document.addEventListener("click", (e) => {
+  const trig = e.target.closest("[data-ctrigger]");
+  if (trig){
+    const panel = trig.nextElementSibling, open = panel.classList.contains("hidden");
+    closePanels(open ? panel : null);
+    panel.classList.toggle("hidden", !open);
+    trig.setAttribute("aria-expanded", String(open));
+    return;
+  }
+  const pk = e.target.closest(".pk[data-c]");
+  if (pk){
+    const box = pk.closest(".cpick");
+    setPick(box, pk.dataset.c);
+    closePanels(null);
+    box.dispatchEvent(new CustomEvent("colorchange", {bubbles:true}));
+    return;
+  }
+  if (!e.target.closest(".cpanel")) closePanels(null);
+});
+document.addEventListener("change", (e) => {
+  if (!e.target.matches(".pk.custom input")) return;
+  const box = e.target.closest(".cpick");
+  setPick(box, e.target.value);
+  closePanels(null);
+  box.dispatchEvent(new CustomEvent("colorchange", {bubbles:true}));
+});
+
+/* calendar nav */
+$("#prevBtn").addEventListener("click", () => {
+  if (ui.view === "year") ui.year--; else ui.month = new Date(ui.month.getFullYear(), ui.month.getMonth()-1, 1);
+  renderPermits();
+});
+$("#nextBtn").addEventListener("click", () => {
+  if (ui.view === "year") ui.year++; else ui.month = new Date(ui.month.getFullYear(), ui.month.getMonth()+1, 1);
+  renderPermits();
+});
+$("#todayBtn").addEventListener("click", () => {
+  const t = new Date(); ui.year = t.getFullYear(); ui.month = startOfMonth(t); renderPermits();
+});
+
+/* property chips (shared filter) */
+$("#propChips").addEventListener("click", (e) => {
+  const b = e.target.closest(".pchip"); if (!b) return;
+  const n = b.dataset.prop;
+  if (n === "__all") ui.props = [];
+  else {
+    const i = ui.props.indexOf(n);
+    if (i > -1) ui.props.splice(i, 1); else ui.props.push(n);
+  }
+  renderPermits();
+});
+
+/* year + month views */
+$("#yearGrid").addEventListener("click", (e) => {
+  const mn = e.target.closest(".mname");
+  if (mn){ ui.month = new Date(ui.year, +mn.dataset.m, 1); ui.view = "month"; renderPermits(); return; }
+  const d = e.target.closest(".yd.has");
+  if (d) openDay(d.dataset.date);
+});
+$("#weeks").addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (chip && window.matchMedia("(min-width:641px)").matches){ openDetail(chip.dataset.id); return; }
+  const more = e.target.closest(".more");
+  const day = e.target.closest(".day");
+  const key = more ? more.dataset.day : (day && day.classList.contains("has") ? day.dataset.date : null);
+  if (key) openDay(key);
+});
+
+/* table */
+$("#thead").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-sort]"); if (!b) return;
+  const k = b.dataset.sort;
+  ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir:1};
+  renderTableBody();
+});
+function rowOpen(e){ const tr = e.target.closest("tr[data-id]"); if (tr) openDetail(tr.dataset.id); }
+$("#tbody").addEventListener("click", rowOpen);
+$("#tbody").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); rowOpen(e); } });
+$("#tfType").addEventListener("change", (e) => { ui.tType = e.target.value; renderTableBody(); });
+$("#tfStatus").addEventListener("change", (e) => { ui.tStatus = e.target.value; renderTableBody(); });
+$("#tfStage").addEventListener("change", (e) => { ui.tStage = e.target.value; renderTableBody(); });
+$("#sortSel").addEventListener("change", (e) => {
+  const a = e.target.value.split(":"); if (a.length !== 2) return;
+  ui.sort = {key:a[0], dir:+a[1]}; renderTableBody();
+});
+$("#filterToggle").addEventListener("click", () => {
+  const open = $("#tabTools").classList.toggle("open");
+  $("#filterToggle").setAttribute("aria-expanded", String(open));
+});
+$("#cardList").addEventListener("click", (e) => { const c = e.target.closest(".pcard"); if (c) openDetail(c.dataset.id); });
+$("#monthAgenda").addEventListener("click", (e) => { const r = e.target.closest(".agrow"); if (r) openDetail(r.dataset.id); });
+$("#fab").addEventListener("click", () => openForm(null));
+$$('input[name="stage"]').forEach((c) => c.addEventListener("change", () => {
+  if (c.checked) $$('input[name="stage"]').forEach((o) => { if (o !== c) o.checked = false; });
+}));
+$("#tfBy").addEventListener("change", (e) => { ui.tDateBy = e.target.value; renderTableBody(); });
+$("#tfFrom").addEventListener("change", (e) => { ui.tFrom = e.target.value; renderTableBody(); });
+$("#tfTo").addEventListener("change", (e) => { ui.tTo = e.target.value; renderTableBody(); });
+$("#clearBtn").addEventListener("click", clearFilters);
+$$("[data-preset]").forEach((b) => {
+  b.addEventListener("click", () => {
+    const t = new Date(), k = b.dataset.preset;
+    if (k === "year"){ ui.tFrom = t.getFullYear()+"-01-01"; ui.tTo = t.getFullYear()+"-12-31"; }
+    else {
+      ui.tDateBy = "expiry"; ui.tFrom = iso(t);
+      ui.tTo = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() + (+k)));
+    }
+    syncTools(); renderTableBody();
+  });
+});
+$("#printBtn").addEventListener("click", () => {
+  buildPrintHead();
+  try { window.print(); } catch (err) { toast("Printing isn’t available here. Use your browser’s print command instead."); }
+});
+
+/* dashboard */
+$("#pgDash").addEventListener("click", (e) => { const r = e.target.closest(".arow"); if (r) openDetail(r.dataset.id); });
+
+/* ---------------- events: settings (Firestore writes) ---------------- */
+function propById(id){ return S.properties.filter((p) => p.id === id)[0]; }
+$("#propList").addEventListener("colorchange", (e) => {
+  if (!can.edit) return;
+  const row = e.target.closest(".row"); if (!row) return;
+  const p = propById(row.dataset.id); if (!p) return;
+  updateDoc(doc(db, "properties", p.id), {color:okColor(e.target.dataset.value, 0)}).catch(fail("Couldn’t save color"));
+});
+$("#propList").addEventListener("change", (e) => {
+  if (!can.edit || !e.target.matches("[data-pname]")) return;
+  const row = e.target.closest(".row"); if (!row) return;
+  const p = propById(row.dataset.id); if (!p) return;
+  const nn = e.target.value.trim(), ex = nn ? findProp(nn) : null;
+  if (!nn || (ex && ex !== p)){
+    toast(!nn ? "A property needs a name." : "A property with that name already exists.");
+    scheduleRender(); return;
+  }
+  if (nn === p.name) return;
+  const old = p.name, b = writeBatch(db);
+  b.update(doc(db, "properties", p.id), {name:nn});
+  S.permits.forEach((x) => { if (x.property === old) b.update(doc(db, "permits", x.id), {property:nn}); });
+  ui.props = ui.props.map((n) => n === old ? nn : n);
+  b.commit().catch(fail("Couldn’t rename"));
+});
+$("#propList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pdel]"); if (!b || !can.edit) return;
+  const p = propById(b.closest(".row").dataset.id); if (!p) return;
+  const n = countBy("property", p.name);
+  if (n){ toast("Can’t remove “" + p.name + "”: " + n + (n===1?" permit uses":" permits use") + " it. Delete or edit those permits first."); return; }
+  deleteDoc(doc(db, "properties", p.id)).catch(fail("Couldn’t remove"));
+});
+$("#typeList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-tdel]"); if (!b || !can.edit) return;
+  const i = +b.closest(".row").dataset.i, t = S.types[i], n = countBy("type", t);
+  if (n){ toast("Can’t remove “" + t + "”: " + n + (n===1?" permit uses":" permits use") + " it."); return; }
+  const next = S.types.filter((_, j) => j !== i);
+  setDoc(doc(db, "config", "main"), {types:next}, {merge:true}).catch(fail("Couldn’t remove"));
+});
+function addProp(){
+  if (!can.edit) return;
+  const inp = $("#newPropName"), name = inp.value.trim();
+  if (!name){ inp.focus(); return; }
+  if (findProp(name)){ toast("A property with that name already exists."); return; }
+  const color = okColor($("#newPropPick").dataset.value, S.properties.length);
+  addDoc(collection(db, "properties"), {name, color, createdAt:serverTimestamp()}).catch(fail("Couldn’t add property"));
+  inp.value = ""; $("#newPropPick").dataset.value = "";
+}
+$("#addPropBtn").addEventListener("click", addProp);
+$("#newPropName").addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); addProp(); } });
+function addType(){
+  if (!can.edit) return;
+  const inp = $("#newTypeName"), name = inp.value.trim();
+  if (!name){ inp.focus(); return; }
+  if (S.types.some((t) => t.toLowerCase() === name.toLowerCase())){ toast("That permit type already exists."); return; }
+  setDoc(doc(db, "config", "main"), {types:S.types.concat([name])}, {merge:true}).catch(fail("Couldn’t add type"));
+  inp.value = "";
+}
+$("#addTypeBtn").addEventListener("click", addType);
+$("#newTypeName").addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); addType(); } });
+$("#setSoon").addEventListener("change", (e) => { prefs.soonDays = +e.target.value; savePrefs(); render(); });
+$("#setTheme").addEventListener("change", (e) => { prefs.theme = e.target.value; applyTheme(); savePrefs(); });
+
+/* ---------------- events: team (Firestore writes) ---------------- */
+$("#memberForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!can.admin) return;
+  const name = $("#mName").value.trim(), email = $("#mEmail").value.trim().toLowerCase();
+  if (!name || !email) return;
+  if (S.team.some((m) => m.email === email)){ toast("That email is already on the list."); return; }
+  const role = $("#mRole").value.toLowerCase();
+  setDoc(doc(db, "members", email), {email, name, role, addedAt:serverTimestamp()})
+    .then(() => toast("Member added. Remember to share the Drive folder with them too."))
+    .catch(fail("Couldn’t add member"));
+  $("#mName").value = ""; $("#mEmail").value = "";
+});
+$("#memberList").addEventListener("change", (e) => {
+  if (!e.target.matches("[data-role]") || !can.admin) return;
+  const email = e.target.closest(".mrow").dataset.email;
+  updateDoc(doc(db, "members", email), {role:e.target.value}).catch(fail("Couldn’t change role"));
+});
+$("#memberList").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-mdel]"); if (!b || !can.admin) return;
+  if (!b.dataset.armed){ b.dataset.armed = "1"; b.textContent = "Confirm remove"; return; }
+  deleteDoc(doc(db, "members", b.closest(".mrow").dataset.email)).catch(fail("Couldn’t remove member"));
+});
+
+/* ---------------- start ---------------- */
+applyTheme();
+if (!SETUP_OK){
+  showGate("setup");
+} else {
+  try {
+    app = initializeApp(FB);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    showGate("loading");
+    onAuthStateChanged(auth, onUser);
+  } catch (e){
+    console.error(e);
+    showGate("error", "Couldn’t start Firebase: " + (e.message || e));
+  }
+}
+</script>
+</body>
+</html>
