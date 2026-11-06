@@ -14,6 +14,7 @@
   --bg:#fbfbfa; --surface:#ffffff; --ink:#1d1d1b; --muted:#6b6b66; --line:#e6e5e1; --line-strong:#d2d1cb;
   --accent:#243b53; --accent-ink:#ffffff; --today:#eef2f7; --other:#f6f6f4;
   --high:#b42318; --med:#9a5b00; --low:#2b7560;
+  --bubble:#efeeea; --ok-bg:#e5f2ed; --ok-ink:#1f5c4a;
   --font:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   color-scheme:light;
   box-sizing:border-box;
@@ -25,6 +26,7 @@
     --bg:#151514; --surface:#1d1d1b; --ink:#ecebe7; --muted:#9d9c95; --line:#2d2c29; --line-strong:#403f3b;
     --accent:#a9c2de; --accent-ink:#151514; --today:#232a33; --other:#191918;
     --high:#f19a8f; --med:#e6b865; --low:#74c4aa;
+    --bubble:#2a2a28; --ok-bg:#1c3029; --ok-ink:#74c4aa;
     color-scheme:dark;
   }
 }
@@ -32,6 +34,7 @@
   --bg:#151514; --surface:#1d1d1b; --ink:#ecebe7; --muted:#9d9c95; --line:#2d2c29; --line-strong:#403f3b;
   --accent:#a9c2de; --accent-ink:#151514; --today:#232a33; --other:#191918;
   --high:#f19a8f; --med:#e6b865; --low:#74c4aa;
+  --bubble:#2a2a28; --ok-bg:#1c3029; --ok-ink:#74c4aa;
   color-scheme:dark;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -94,6 +97,7 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
 
 select,input[type=text],input[type=email],input[type=date]{border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);padding:8px 10px;width:100%}
 input[readonly]{background:none;border-color:transparent;padding-left:0}
+textarea{width:100%;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);padding:8px 10px;font:inherit;color:inherit;resize:vertical;min-height:70px}
 
 .summary{display:flex;flex-wrap:wrap;gap:6px 22px;margin:14px 0 14px;color:var(--muted);font-size:14px}
 .summary span{display:inline-flex;align-items:center;gap:7px}
@@ -185,11 +189,11 @@ button.yd:hover{background:var(--other)}
 .presets{display:flex;gap:6px;flex-wrap:wrap}
 .tools-end{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
 .tools-end .count{color:var(--muted);font-size:14px;margin-right:6px}
-.table-wrap{border:1px solid var(--line);border-radius:10px;overflow-x:auto;background:var(--surface)}
-table{width:100%;border-collapse:collapse;min-width:760px}
+.table-wrap{border:1px solid var(--line);border-radius:10px;overflow:auto;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:1280px}
 th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
 tr:last-child td{border-bottom:0}
-th{font-weight:500;color:var(--muted);font-size:13px;padding:0}
+th{font-weight:500;color:var(--muted);font-size:13px;padding:0;position:sticky;top:0;background:var(--surface);z-index:2;box-shadow:inset 0 -1px 0 var(--line)}
 th button{width:100%;text-align:left;border:0;background:none;padding:11px 14px;cursor:pointer;color:inherit;font-weight:inherit}
 th button[data-active="true"]{color:var(--ink)}
 th button .ar{display:inline-block;width:1em;color:var(--muted)}
@@ -320,7 +324,16 @@ dl.facts dd{margin:0;min-width:0}
 .mbar select{flex:1;width:auto;min-width:0}
 .mbar .cnt{color:var(--muted);font-size:13px;white-space:nowrap}
 #cardList{display:none;flex-direction:column;gap:10px}
-.pcard{display:block;width:100%;text-align:left;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;background:var(--surface);padding:12px 14px;cursor:pointer;--c:var(--muted)}
+.pcard{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;background:var(--surface);--c:var(--muted);overflow:hidden;flex:none}
+.pc-main{display:block;width:100%;text-align:left;border:0;background:none;padding:12px 14px;cursor:pointer}
+.pc-rk{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;border:0;border-top:1px solid var(--line);background:none;padding:10px 14px;text-align:left;cursor:pointer;font-size:14px;color:var(--ink)}
+.pc-rk.none{color:var(--muted)}
+.pc-rk.done .rt{color:var(--muted)}
+.pc-rk.done svg{stroke:var(--low)}
+.pc-rk svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.pc-rk .rt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-rk .rd{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+.pcard .r4{margin-top:6px;font-size:12px;color:var(--muted)}
 .pcard .r1{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .pcard .r1 b{font-weight:600;font-size:15px;min-width:0;overflow-wrap:anywhere}
 .pcard .st{font-size:13px;white-space:nowrap;margin-top:2px}
@@ -341,6 +354,71 @@ dl.facts dd{margin:0;min-width:0}
 .agrow .mkk{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c);display:inline-block}
 .agrow.exp .mkk{background:var(--c)}
 .fab{display:none}
+
+/* remarks column + chat */
+td.rkc{padding:0;min-width:260px;max-width:320px}
+.rkbtn{display:flex;align-items:center;gap:10px;width:100%;height:100%;min-height:48px;border:0;background:none;padding:11px 14px;text-align:left;cursor:pointer;font-size:14px;color:var(--ink)}
+.rkbtn:hover,.rkbtn.sel{background:var(--today)}
+.rkbtn .rt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rkbtn .rd{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:none}
+.rkbtn.none{color:var(--muted)}
+.rkbtn.done .rt{color:var(--muted)}
+.rkbtn.done svg{stroke:var(--low)}
+.rkbtn svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rkn{flex:none;min-width:22px;height:22px;box-sizing:border-box;padding:0 6px;border-radius:11px;background:var(--today);color:var(--accent);font-size:12px;font-weight:600;line-height:22px;text-align:center}
+.rkbtn.done .rkn{background:var(--other);color:var(--muted)}
+td.addby{line-height:1.3;font-size:14px}
+td.addby small{display:block;color:var(--muted);font-size:12px}
+button.slink{border:0;background:none;padding:0;font:inherit;cursor:pointer}
+.rkback{position:fixed;inset:0;background:rgba(20,20,18,.45);z-index:70}
+.rkpop{position:fixed;z-index:80;width:340px;height:380px;display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 14px 36px rgba(20,20,18,.22)}
+.rkpop.center{left:50%;top:50%;transform:translate(-50%,-50%)}
+.rk-arrow{position:absolute;width:12px;height:12px;background:var(--surface);display:none}
+.rkpop.side-l .rk-arrow{display:block;right:-7px;border-top:1px solid var(--line-strong);border-right:1px solid var(--line-strong);transform:rotate(45deg)}
+.rkpop.side-r .rk-arrow{display:block;left:-7px;border-bottom:1px solid var(--line-strong);border-left:1px solid var(--line-strong);transform:rotate(45deg)}
+.rk-head{display:flex;align-items:center;gap:8px;padding:0 10px 0 16px;min-height:58px;border-bottom:1px solid var(--line);flex:none}
+.rk-title{flex:1;min-width:0;line-height:1.3}
+.rk-title b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-title small{font-size:12px;color:var(--muted)}
+.rk-resolve{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 9px;border-radius:16px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer}
+.rk-resolve svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.rk-resolve:disabled{opacity:.45;cursor:default}
+.rk-resolve.done{background:var(--ok-bg);border-color:var(--low);color:var(--ok-ink)}
+.rk-close{width:32px;height:32px;border:0;background:none;border-radius:16px;cursor:pointer;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
+.rk-close svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.rk-msgs{flex:1;min-height:0;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.rk-m{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.rk-m.mine{align-items:flex-end}
+.rk-b{max-width:84%;box-sizing:border-box;background:var(--bubble);color:var(--ink);border-radius:14px 14px 14px 3px;padding:8px 12px;font-size:14px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.rk-m.mine .rk-b{background:var(--accent);color:var(--accent-ink);border-radius:14px 14px 3px 14px}
+.rk-t{font-size:12px;color:var(--muted)}
+.rk-t b{color:var(--ink);font-weight:600}
+.rk-del{border:0;background:none;padding:0 0 0 8px;font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.rk-sys{align-self:center;display:inline-flex;align-items:center;gap:6px;background:var(--ok-bg);color:var(--ok-ink);border-radius:999px;padding:4px 12px;font-size:12px;font-weight:500}
+.rk-sys svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.rk-empty{margin:auto;text-align:center;color:var(--muted);font-size:14px;padding:0 24px}
+.rk-comp{flex:none;border-top:1px solid var(--line);padding:10px 12px 8px;display:flex;flex-direction:column;gap:6px}
+.rk-row{display:flex;align-items:flex-end;gap:8px}
+.rk-row textarea{flex:1;min-width:0;height:44px;min-height:44px;resize:none;padding:8px 10px;font-size:14px;line-height:1.35}
+.rk-send{width:40px;height:40px;flex:none;border:0;border-radius:50%;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.rk-send:disabled{opacity:.4;cursor:default}
+.rk-send svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rk-hint{font-size:12px;color:var(--muted)}
+.rk-done{flex:none;border-top:1px solid var(--line);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted)}
+
+/* accent color slider */
+.hue{display:flex;align-items:center;gap:10px}
+.hue input[type=range]{-webkit-appearance:none;appearance:none;width:190px;max-width:100%;height:10px;border-radius:5px;border:0;padding:0;margin:0;cursor:pointer;background:linear-gradient(to right,hsl(0 70% 50%),hsl(60 70% 48%),hsl(120 60% 42%),hsl(180 65% 42%),hsl(240 65% 55%),hsl(300 60% 50%),hsl(360 70% 50%))}
+.hue input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--ink);cursor:pointer}
+.hue input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid var(--ink);cursor:pointer}
+.hue-sw{width:28px;height:28px;border-radius:50%;border:1px solid var(--line-strong);background:var(--accent);flex:none}
+
+/* table view fits the screen and scrolls inside its own box */
+.app.fit .main{height:100vh;height:100dvh;min-height:560px;overflow:hidden}
+.app.fit .wrap{height:100%;max-width:1600px;display:flex;flex-direction:column;padding-bottom:20px}
+.app.fit #pgPermits{flex:1;min-height:0;display:flex;flex-direction:column}
+.app.fit #tabView{flex:1;min-height:0;display:flex;flex-direction:column}
+.app.fit .table-wrap{flex:1;min-height:200px}
 
 /* ---------- responsive ---------- */
 @media (max-width:860px){ .dgrid{grid-template-columns:1fr} }
@@ -409,6 +487,25 @@ dl.facts dd{margin:0;min-width:0}
   .addrow .btn{flex:1}
   .pref{flex-wrap:wrap}
   .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  .hue input[type=range]{width:100%}
+  .hue{flex:1 1 100%}
+  /* table view on a phone: filter bar stays put, cards scroll */
+  .app.fit .main{min-height:0}
+  .app.fit .wrap{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .app.fit .table-wrap{flex:none;min-height:0;overflow:visible}
+  .app.fit #cardList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .app.fit .mbar{flex:none}
+  .app.fit .tools.open{max-height:42vh;overflow:auto;flex:none}
+  /* chat opens as a bottom sheet */
+  .rkpop,.rkpop.center{left:0!important;right:0;bottom:0;top:auto!important;width:auto;height:min(82vh,640px)!important;transform:none;border-radius:16px 16px 0 0;border-bottom:0}
+  .rk-arrow{display:none!important}
+  .rk-head{min-height:64px}
+  .rk-resolve{height:44px;padding:0 16px 0 12px;font-size:14px;border-radius:22px}
+  .rk-close{width:44px;height:44px}
+  .rk-row textarea{font-size:16px;height:48px;min-height:48px}
+  .rk-send{width:48px;height:48px}
+  .rk-comp{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  .rk-b{font-size:15px}
 }
 @media (max-width:640px){
   .day{min-height:62px;padding:4px}
@@ -440,6 +537,13 @@ dl.facts dd{margin:0;min-width:0}
   body{font-size:11px;background:#fff}
   .side,header.top,.summary,#propChips,.tools,.mbar,.fab,#cardList,.toast,.banner,.gate,#pgDash,#pgSettings,#pgTeam,#calHead,#yearView,#monthView,#legend,dialog{display:none!important}
   #permitTable{display:table!important}
+  .rkpop,.rkback{display:none!important}
+  .app.fit .main,.app.fit .wrap{height:auto!important;min-height:0!important;overflow:visible!important;display:block!important;max-width:none!important}
+  .app.fit #pgPermits,.app.fit #tabView{display:block!important}
+  .table-wrap{overflow:visible!important}
+  th{position:static!important;box-shadow:none!important}
+  td.rkc{min-width:0;max-width:none;white-space:normal}
+  .rkbtn{padding:6px 8px;min-height:0}
   .wrap{max-width:none;padding:0}
   .main{margin:0}
   .print-head{display:block;margin-bottom:12px}
@@ -563,6 +667,9 @@ dl.facts dd{margin:0;min-width:0}
           <label class="f"><span>Stage</span>
             <select id="tfStage"><option value="all">Any stage</option><option value="Final">Final</option><option value="Temporary">Temporary</option><option value="none">Not set</option></select>
           </label>
+          <label class="f"><span>Remarks</span>
+            <select id="tfRemarks"><option value="all">Any remarks</option><option value="open">Open conversations</option><option value="resolved">Resolved</option><option value="none">No remarks</option></select>
+          </label>
           <label class="f"><span>Date by</span>
             <select id="tfBy"><option value="expiry">Expiry date</option><option value="issued">Issuance date</option></select>
           </label>
@@ -639,12 +746,20 @@ dl.facts dd{margin:0;min-width:0}
             <option value="auto">Match device</option><option value="light">Light</option><option value="dark">Dark</option>
           </select>
         </div>
+        <div class="pref">
+          <div>Accent color<small>Changes buttons, tabs and highlights. Property and status colors stay the same.</small></div>
+          <div class="hue">
+            <input type="range" id="setHue" min="0" max="360" step="1" value="210" aria-label="Accent color">
+            <span class="hue-sw" id="hueSw" aria-hidden="true"></span>
+            <button type="button" class="btn sm" id="hueReset">Reset</button>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- TEAM -->
     <section id="pgTeam" class="hidden narrow">
-      <div class="note">Members sign in with the Google account that matches the email listed here. Anyone not on this list can’t read any data. Also share your Google Drive scan folder with each member so they can open scans.</div>
+      <div class="note">Members sign in with the Google account that matches the email listed here. Anyone not on this list can’t read any data. Members open scans straight from the app, so you don’t need to share the Drive folder with them.</div>
       <div class="sec">
         <h2>Members</h2>
         <div id="memberList"></div>
@@ -726,6 +841,12 @@ dl.facts dd{margin:0;min-width:0}
       <div class="hint">JPG, PNG or PDF, up to 15 MB each and 5 per permit. Files are saved to the shared Drive folder automatically.</div>
     </div>
 
+    <div class="field" id="remarksField">
+      <label for="fRemarks">Remarks (optional)</label>
+      <textarea id="fRemarks" rows="3" maxlength="1000" placeholder="Anything the team should know about this permit"></textarea>
+      <div class="hint">Becomes the first message in this permit’s chat, with your name and the time. Anyone on the team can reply.</div>
+    </div>
+
     <div class="preview" id="preview" aria-live="polite"></div>
     <div class="err" id="formErr" role="alert"></div>
 
@@ -750,11 +871,30 @@ dl.facts dd{margin:0;min-width:0}
 
 <div class="toast" id="toast" role="status"></div>
 
+<div class="rkback hidden" id="rkBack"></div>
+<div class="rkpop hidden" id="rkPop" role="dialog" aria-label="Remarks chat">
+  <div class="rk-arrow" id="rkArrow"></div>
+  <div class="rk-head">
+    <div class="rk-title"><b id="rkTitle"></b><small id="rkProp"></small></div>
+    <button type="button" class="rk-resolve" id="rkResolve" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg><span id="rkResolveLbl">Resolve</span></button>
+    <button type="button" class="rk-close" id="rkClose" aria-label="Close chat"><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+  </div>
+  <div class="rk-msgs" id="rkMsgs"></div>
+  <div class="rk-comp" id="rkComp">
+    <div class="rk-row">
+      <textarea id="rkText" rows="2" maxlength="2000" placeholder="Write a remark…" aria-label="Write a remark"></textarea>
+      <button type="button" class="rk-send" id="rkSend" aria-label="Send remark" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+    </div>
+    <div class="rk-hint">Enter to send, Shift + Enter for a new line</div>
+  </div>
+  <div class="rk-done hidden" id="rkDone"><span>This thread is resolved.</span><button type="button" class="btn sm" id="rkReopen">Reopen</button></div>
+</div>
+
 <script src="firebase-config.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, arrayUnion, increment, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -774,20 +914,21 @@ const PREF_KEY = "permit-tracker-prefs";
 const IMPORTED_KEY = "permit-tracker-imported";
 
 /* ---------------- state ---------------- */
-const prefs = {soonDays:30, theme:"auto", collapsed:null};
+const prefs = {soonDays:30, theme:"auto", collapsed:true, hue:null, navV:2};
 try {
   const p = JSON.parse(localStorage.getItem(PREF_KEY) || "null");
   if (p){
     if ([7,14,30,60,90].indexOf(+p.soonDays) > -1) prefs.soonDays = +p.soonDays;
     if (["auto","light","dark"].indexOf(p.theme) > -1) prefs.theme = p.theme;
-    if (typeof p.collapsed === "boolean") prefs.collapsed = p.collapsed;
+    // the sidebar starts collapsed for everyone once; after that each person's choice is kept
+    if (p.navV === 2 && typeof p.collapsed === "boolean") prefs.collapsed = p.collapsed;
+    if (typeof p.hue === "number" && p.hue >= 0 && p.hue <= 360) prefs.hue = Math.round(p.hue);
   }
 } catch (e) {}
 function savePrefs(){ try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch (e) {} }
-if (prefs.collapsed === null) prefs.collapsed = window.innerWidth < 720;
 
-const S = {permits:[], types:DEFAULT_TYPES.slice(), properties:[], team:[], settings:prefs};
-const ready = {permits:false, config:false, properties:false, members:false};
+const S = {permits:[], types:DEFAULT_TYPES.slice(), properties:[], team:[], threads:{}, settings:prefs};
+const ready = {permits:false, config:false, properties:false, members:false, threads:false};
 let ME = null;
 const can = {
   get edit(){ return !!ME && ["owner","admin","editor"].indexOf(ME.role) > -1; },
@@ -797,7 +938,7 @@ const can = {
 const now0 = new Date();
 const ui = {
   page:"permits", view:"year", year:now0.getFullYear(), month:new Date(now0.getFullYear(), now0.getMonth(), 1),
-  props:[], tType:"all", tStatus:"all", tStage:"all", tDateBy:"expiry", tFrom:"", tTo:"",
+  props:[], tType:"all", tStatus:"all", tStage:"all", tRemarks:"all", tDateBy:"expiry", tFrom:"", tTo:"",
   sort:{key:"expiry", dir:1}, editing:null, renewing:false
 };
 
@@ -839,6 +980,24 @@ function nextColor(){
 }
 function countBy(field, val){ return S.permits.filter((p) => p[field] === val).length; }
 function findPermit(id){ return S.permits.filter((p) => p.id === id)[0]; }
+const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
+function tsMs(t){ return t && typeof t.toMillis === "function" ? t.toMillis() : 0; }
+function fmtDT(t){
+  const ms = tsMs(t); if (!ms) return "Just now";
+  return new Date(ms).toLocaleString(undefined,{month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"2-digit"});
+}
+function fmtShort(t){ const ms = tsMs(t); return ms ? new Date(ms).toLocaleDateString(undefined,{month:"short", day:"numeric"}) : ""; }
+function nameOf(email){
+  if (!email) return "";
+  const m = S.team.filter((x) => x.email === String(email).toLowerCase())[0];
+  return m ? (m.name || m.email) : String(email);
+}
+function firstName(n){ n = String(n || ""); return n.indexOf("@") > 0 ? n.split("@")[0] : n.split(" ")[0]; }
+function threadOf(id){ return S.threads[id] || {count:0}; }
+function rkState(id){
+  const t = threadOf(id), n = t.count || 0;
+  return {n, none:n <= 0, open:n > 0 && !t.resolved, done:n > 0 && !!t.resolved, last:t.lastText || ""};
+}
 function safeDriveUrl(u){
   try {
     const x = new URL(String(u).trim());
@@ -856,6 +1015,19 @@ function toast(msg){
 function applyTheme(){
   const r = document.documentElement;
   if (prefs.theme === "light" || prefs.theme === "dark") r.setAttribute("data-theme", prefs.theme); else r.removeAttribute("data-theme");
+  applyAccent();
+}
+function applyAccent(){
+  const st = document.documentElement.style;
+  if (prefs.hue == null){ ["--accent", "--accent-ink", "--today"].forEach((k) => st.removeProperty(k)); return; }
+  const dark = prefs.theme === "dark" || (prefs.theme === "auto" && mq("(prefers-color-scheme: dark)"));
+  const h = prefs.hue;
+  st.setProperty("--accent", dark ? "hsl(" + h + " 55% 72%)" : "hsl(" + h + " 45% 26%)");
+  st.setProperty("--accent-ink", dark ? "#151514" : "#ffffff");
+  st.setProperty("--today", dark ? "hsl(" + h + " 25% 16%)" : "hsl(" + h + " 45% 95%)");
+}
+if (window.matchMedia){
+  try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyAccent); } catch (e) {}
 }
 function fail(what){ return (e) => { console.error(what, e); toast(what + ": " + (e && (e.code || e.message) || "unknown error")); }; }
 
@@ -884,6 +1056,22 @@ function hideGate(){ $("#gate").classList.add("hidden"); $("#app").classList.rem
 /* ---------------- firebase ---------------- */
 let app, auth, db;
 let memberUnsub = null, dataUnsubs = [], dataStarted = false, bootstrapped = false;
+const loadErrors = {};
+let watchdog = null;
+function loadFail(what){
+  return (e) => {
+    console.error("Couldn’t load " + what, e);
+    loadErrors[what] = (e && (e.code || e.message)) || "unknown";
+    toast("Couldn’t load " + what + ": " + loadErrors[what]);
+    scheduleRender();
+  };
+}
+function loadMsg(what){
+  const c = loadErrors[what]; if (!c) return null;
+  return c === "permission-denied"
+    ? "Couldn’t load " + what + ": Firestore refused access (permission-denied). Check that the rules were published in full and that the owner email matches in both files."
+    : "Couldn’t load " + what + " (" + c + "). Try reloading the page. If it keeps happening, turn off ad blockers for this site.";
+}
 let rq = 0;
 function scheduleRender(){ if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
 
@@ -900,7 +1088,10 @@ async function signIn(){
 function stopData(){
   dataUnsubs.forEach((f) => { try { f(); } catch (e) {} });
   dataUnsubs = []; dataStarted = false;
-  S.permits = []; S.properties = []; S.team = []; S.types = DEFAULT_TYPES.slice();
+  clearTimeout(watchdog);
+  Object.keys(loadErrors).forEach((k) => delete loadErrors[k]);
+  S.permits = []; S.properties = []; S.team = []; S.threads = {}; S.types = DEFAULT_TYPES.slice();
+  closeRemarks();
   Object.keys(ready).forEach((k) => ready[k] = false);
 }
 
@@ -908,25 +1099,35 @@ function startData(){
   if (dataStarted) return;
   dataStarted = true;
   dataUnsubs.push(onSnapshot(collection(db, "permits"), (s) => {
-    S.permits = s.docs.map((d) => Object.assign({id:d.id}, d.data()))
+    S.permits = s.docs.map((d) => Object.assign({id:d.id}, d.data({serverTimestamps:"estimate"})))
       .filter((p) => p.issued && p.term && p.type && p.property);
-    ready.permits = true; scheduleRender();
-  }, fail("Couldn’t load permits")));
+    ready.permits = true; delete loadErrors.permits; scheduleRender();
+  }, loadFail("permits")));
+  clearTimeout(watchdog);
+  watchdog = setTimeout(() => {
+    if (!ready.permits && !loadErrors.permits){ loadErrors.permits = "no response from the database"; scheduleRender(); }
+  }, 12000);
   dataUnsubs.push(onSnapshot(collection(db, "properties"), (s) => {
     S.properties = s.docs.map((d, i) => ({id:d.id, name:String(d.data().name || ""), color:okColor(d.data().color, i)}))
       .filter((p) => p.name)
       .sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
     ready.properties = true; scheduleRender();
-  }, fail("Couldn’t load properties")));
+  }, loadFail("properties")));
   dataUnsubs.push(onSnapshot(doc(db, "config", "main"), (s) => {
     const t = s.exists() ? s.data().types : null;
     S.types = (Array.isArray(t) && t.length) ? t.map(String) : DEFAULT_TYPES.slice();
     ready.config = true; scheduleRender();
-  }, fail("Couldn’t load settings")));
+  }, loadFail("settings")));
+  dataUnsubs.push(onSnapshot(collection(db, "threads"), (s) => {
+    const m = {};
+    s.docs.forEach((d) => { m[d.id] = d.data({serverTimestamps:"estimate"}); });
+    S.threads = m; ready.threads = true; scheduleRender();
+    if (rk.id) renderRk(false);
+  }, loadFail("remarks")));
   dataUnsubs.push(onSnapshot(collection(db, "members"), (s) => {
     S.team = s.docs.map((d) => Object.assign({email:d.id}, d.data()));
     ready.members = true; scheduleRender();
-  }, fail("Couldn’t load team")));
+  }, loadFail("team")));
 }
 
 async function bootstrap(user){
@@ -950,6 +1151,9 @@ function onUser(user){
   showGate("loading");
   memberUnsub = onSnapshot(doc(db, "members", email), (snap) => {
     if (snap.exists()){
+      // Wait until the server has confirmed the member record (matters on the very first owner sign-in),
+      // otherwise the data listeners can start before the rules can see it and get refused.
+      if (snap.metadata && snap.metadata.hasPendingWrites) return;
       const d = snap.data();
       ME = {email, name:d.name || user.displayName || email, role:d.role || "viewer"};
       hideGate(); startData(); scheduleRender();
@@ -970,6 +1174,7 @@ function tableList(){
   if (ui.tType !== "all") list = list.filter((p) => p.type === ui.tType);
   if (ui.tStatus !== "all") list = list.filter((p) => status(p).key === ui.tStatus);
   if (ui.tStage !== "all") list = list.filter((p) => ui.tStage === "none" ? !p.stage : p.stage === ui.tStage);
+  if (ui.tRemarks !== "all") list = list.filter((p) => { const r = rkState(p.id); return ui.tRemarks === "open" ? r.open : ui.tRemarks === "resolved" ? r.done : r.none; });
   if (ui.tFrom || ui.tTo){
     list = list.filter((p) => {
       const d = ui.tDateBy === "issued" ? p.issued : expiryOf(p);
@@ -986,6 +1191,8 @@ const TITLES = {permits:"Permits", dashboard:"Dashboard", settings:"Settings", t
 function render(){
   if (!ME) return;
   $("#app").classList.toggle("collapsed", !!prefs.collapsed);
+  $("#app").classList.toggle("fit", ui.page === "permits" && ui.view === "table");
+  if (rk.id && ui.page !== "permits") closeRemarks();
   $("#collapseBtn").setAttribute("aria-expanded", String(!prefs.collapsed));
   $("#collapseBtn").title = prefs.collapsed ? "Expand sidebar" : "Collapse sidebar";
   $$(".nav[data-page]").forEach((b) => {
@@ -1027,7 +1234,11 @@ function renderPermits(){
 
 function renderSummary(){
   const el = $("#summary");
-  if (!ready.permits){ el.innerHTML = "<span>Loading permits…</span>"; return; }
+  if (!ready.permits){
+    const m = loadMsg("permits");
+    el.innerHTML = m ? '<span style="color:var(--high)">' + esc(m) + '</span>' : "<span>Loading permits…</span>";
+    return;
+  }
   const list = propFiltered(), c = {expired:0, soon:0, active:0};
   list.forEach((p) => c[status(p).key]++);
   if (!list.length){ el.innerHTML = "<span>No permits tracked yet</span>"; return; }
@@ -1207,7 +1418,8 @@ function renderAgenda(){
 /* ---------------- table view ---------------- */
 const COLS = [
   {key:"type", label:"Permit"}, {key:"property", label:"Property"}, {key:"issued", label:"Issued"},
-  {key:"expiry", label:"Expires"}, {key:"term", label:"Term"}, {key:"priority", label:"Priority"}, {key:"stage", label:"Stage"}, {key:"status", label:"Status"}
+  {key:"expiry", label:"Expires"}, {key:"term", label:"Term"}, {key:"priority", label:"Priority"}, {key:"stage", label:"Stage"}, {key:"status", label:"Status"},
+  {key:"createdAt", label:"Added by"}, {key:"remarks", label:"Remarks"}
 ];
 const CLIP = '<svg class="clip" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
 function sortVal(p, key){
@@ -1215,8 +1427,23 @@ function sortVal(p, key){
     case "expiry": return expiryOf(p);
     case "priority": return PR_RANK[p.priority];
     case "status": return status(p).days;
+    case "createdAt": return tsMs(p.createdAt);
+    case "remarks": return rkState(p.id).n;
     default: return String(p[key] == null ? "" : p[key]).toLowerCase();
   }
+}
+const RK_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+const RK_CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+function rkCell(p){
+  const r = rkState(p.id);
+  if (r.none) return RK_PLUS + '<span class="rt">Add remark</span>';
+  if (r.open) return '<i class="rd"></i><span class="rt">' + esc(r.last) + '</span><span class="rkn">' + r.n + '</span>';
+  return RK_CHECK + '<span class="rt">' + esc(r.last) + '</span><span class="rkn">' + r.n + '</span>';
+}
+function rkClass(p){ const r = rkState(p.id); return r.none ? "none" : r.done ? "done" : "open"; }
+function rkLabel(p){
+  const r = rkState(p.id);
+  return r.none ? "Add a remark to " + p.type : "Open remarks for " + p.type + ", " + r.n + (r.n === 1 ? " message" : " messages") + (r.done ? ", resolved" : "");
 }
 function syncTools(){
   const types = S.types.slice();
@@ -1226,6 +1453,7 @@ function syncTools(){
   $("#tfType").value = ui.tType;
   $("#tfStatus").value = ui.tStatus;
   $("#tfStage").value = ui.tStage;
+  $("#tfRemarks").value = ui.tRemarks;
   const sk = ui.sort.key + ":" + ui.sort.dir;
   $("#sortSel").value = Array.from($("#sortSel").options).some((o) => o.value === sk) ? sk : "";
   $("#tfBy").value = ui.tDateBy;
@@ -1255,15 +1483,21 @@ function renderTableBody(){
       '<td>'+esc(p.term)+'</td>'+
       '<td><span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></td>'+
       '<td>'+(p.stage ? '<span class="tag '+esc(p.stage)+'" style="margin-left:0">'+esc(p.stage)+'</span>' : '<span class="muted">-</span>')+'</td>'+
-      '<td><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></td></tr>';
+      '<td><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></td>'+
+      '<td class="addby">'+(p.createdBy ? esc(nameOf(p.createdBy)) + (p.createdAt ? '<small>'+esc(fmtDT(p.createdAt))+'</small>' : '') : '<span class="muted">-</span>')+'</td>'+
+      '<td class="rkc"><button type="button" class="rkbtn '+rkClass(p)+(rk.id === p.id ? ' sel' : '')+'" data-rk="'+esc(p.id)+'" aria-label="'+esc(rkLabel(p))+'" aria-expanded="'+(rk.id === p.id)+'">'+rkCell(p)+'</button></td></tr>';
   }).join("");
   $("#cardList").innerHTML = list.map((p) => {
     const s = status(p), n = (p.scans || []).length;
-    return '<button type="button" class="pcard" data-id="'+esc(p.id)+'" style="--c:'+propColor(p.property)+'">'+
+    return '<div class="pcard" style="--c:'+propColor(p.property)+'">'+
+      '<button type="button" class="pc-main" data-id="'+esc(p.id)+'">'+
       '<div class="r1"><b>'+esc(p.type)+(n ? CLIP : '')+'</b><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></div>'+
       '<div class="r2">'+esc(p.property)+(p.stage ? '<span class="tag '+esc(p.stage)+'">'+esc(p.stage)+'</span>' : '')+'</div>'+
       '<div class="r3"><span>Issued <b>'+fmt(p.issued)+'</b></span><span>Expires <b>'+fmt(expiryOf(p))+'</b></span>'+
-      '<span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></div></button>';
+      '<span class="pill '+esc(p.priority)+'"><i></i>'+esc(p.priority)+'</span></div>'+
+      (p.createdBy ? '<div class="r4">Added by '+esc(firstName(nameOf(p.createdBy)))+(p.createdAt ? ', '+esc(fmtShort(p.createdAt)) : '')+'</div>' : '')+
+      '</button>'+
+      '<button type="button" class="pc-rk '+rkClass(p)+'" data-rk="'+esc(p.id)+'" aria-label="'+esc(rkLabel(p))+'">'+rkCell(p)+'</button></div>';
   }).join("");
   const total = S.permits.length;
   const countText = list.length + " of " + total + (total === 1 ? " permit" : " permits");
@@ -1274,13 +1508,14 @@ function renderTableBody(){
   if (ui.tType !== "all") nf++;
   if (ui.tStatus !== "all") nf++;
   if (ui.tStage !== "all") nf++;
+  if (ui.tRemarks !== "all") nf++;
   if (ui.tFrom || ui.tTo) nf++;
   $("#filterToggle").textContent = "Filters" + (nf ? " (" + nf + ")" : "");
   const empty = $("#tabEmpty");
   if (!list.length){
     empty.classList.remove("hidden");
     $("#permitTable").classList.add("hidden");
-    if (!ready.permits) empty.innerHTML = '<p>Loading permits…</p>';
+    if (!ready.permits) empty.innerHTML = '<p>' + esc(loadMsg("permits") || "Loading permits…") + '</p>';
     else if (total) empty.innerHTML = '<p>No permits match these filters.</p><button type="button" class="btn" data-clear>Clear filters</button>';
     else empty.innerHTML = '<p>No permits yet.'+(can.edit ? ' Add one to track its issuance and expiry dates.' : '')+'</p>'+(can.edit ? '<button type="button" class="btn primary" data-add>Add permit</button>' : '');
   } else {
@@ -1289,7 +1524,7 @@ function renderTableBody(){
   }
 }
 function clearFilters(){
-  ui.props = []; ui.tType = "all"; ui.tStatus = "all"; ui.tStage = "all"; ui.tDateBy = "expiry"; ui.tFrom = ""; ui.tTo = "";
+  ui.props = []; ui.tType = "all"; ui.tStatus = "all"; ui.tStage = "all"; ui.tRemarks = "all"; ui.tDateBy = "expiry"; ui.tFrom = ""; ui.tTo = "";
   render();
 }
 function buildPrintHead(){
@@ -1298,6 +1533,7 @@ function buildPrintHead(){
   if (ui.tType !== "all") parts.push("Permit: " + ui.tType);
   if (ui.tStatus !== "all") parts.push("Status: " + {expired:"Expired", soon:"Due soon", active:"Active"}[ui.tStatus]);
   if (ui.tStage !== "all") parts.push("Stage: " + (ui.tStage === "none" ? "Not set" : ui.tStage));
+  if (ui.tRemarks !== "all") parts.push("Remarks: " + {open:"Open conversations", resolved:"Resolved", none:"None"}[ui.tRemarks]);
   if (ui.tFrom || ui.tTo) parts.push((ui.tDateBy === "issued" ? "Issued" : "Expires") + (ui.tFrom ? " from " + fmt(ui.tFrom) : "") + (ui.tTo ? " to " + fmt(ui.tTo) : ""));
   $("#printMeta").textContent = "Printed " + new Date().toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) +
     ". " + list.length + (list.length === 1 ? " permit" : " permits") + ". " + (parts.length ? "Filters: " + parts.join("; ") + "." : "No filters applied.");
@@ -1420,6 +1656,7 @@ function renderSettings(){
   }
   $("#setSoon").value = String(prefs.soonDays);
   $("#setTheme").value = prefs.theme;
+  $("#setHue").value = prefs.hue == null ? 210 : prefs.hue;
 }
 
 /* ---------------- team ---------------- */
@@ -1456,6 +1693,8 @@ function openDay(key){
 function openDetail(id){
   const p = findPermit(id); if (!p) return;
   const s = status(p), links = scanLinksHTML(p.scans);
+  const rs = rkState(p.id);
+  const edited = !!p.updatedBy && (tsMs(p.updatedAt) - tsMs(p.createdAt)) > 60000;
   const hist = (p.history || []).slice().reverse().slice(0, 5).map((h) => {
     const l = scanLinksHTML(h.scans);
     return '<div><b>Previous term:</b> '+(h.issued ? fmt(h.issued) : "?")+' to '+(h.expiry ? fmt(h.expiry) : "?")+(l ? '<br>'+l : '')+'</div>';
@@ -1471,6 +1710,9 @@ function openDetail(id){
     (p.stage ? '<dt>Stage</dt><dd><span class="tag '+esc(p.stage)+'" style="margin-left:0">'+esc(p.stage)+'</span></dd>' : '')+
     '<dt>Status</dt><dd><span class="st '+s.key+'"><i></i>'+esc(s.label)+'</span></dd>'+
     '<dt>Scans</dt><dd>'+(links || '<span class="muted">None attached</span>')+'</dd>'+
+    '<dt>Remarks</dt><dd><button type="button" class="slink" data-rk="'+esc(p.id)+'">'+(rs.none ? 'Add a remark' : 'Open chat ('+rs.n+')'+(rs.done ? ', resolved' : ''))+'</button></dd>'+
+    (p.createdBy ? '<dt>Added by</dt><dd>'+esc(nameOf(p.createdBy))+(p.createdAt ? '<br><span class="muted">'+esc(fmtDT(p.createdAt))+'</span>' : '')+'</dd>' : '')+
+    (edited ? '<dt>Last edited</dt><dd>'+esc(nameOf(p.updatedBy))+'<br><span class="muted">'+esc(fmtDT(p.updatedAt))+'</span></dd>' : '')+
     '</dl>'+(hist ? '<div class="hist">'+hist+'</div>' : '')+
     '<div class="actions">'+
       (can.edit
@@ -1487,13 +1729,15 @@ viewDlg.addEventListener("click", (e) => {
   const t = e.target;
   if (t === viewDlg){ viewDlg.close(); return; }
   const btn = t.closest("button"); if (!btn) return;
-  if (btn.hasAttribute("data-close")) viewDlg.close();
+  if (btn.dataset.rk){ const rid = btn.dataset.rk; viewDlg.close(); openRemarks(rid, null); }
+  else if (btn.hasAttribute("data-close")) viewDlg.close();
   else if (btn.dataset.edit){ viewDlg.close(); openForm(findPermit(btn.dataset.edit)); }
   else if (btn.dataset.renew){ const p = findPermit(btn.dataset.renew); viewDlg.close(); openForm(p, {renew:true}); }
   else if (btn.dataset.del){
     if (btn.dataset.armed){
       const dp = findPermit(btn.dataset.del), ids = dp ? fileIdsOf(dp) : [];
-      deleteDoc(doc(db, "permits", btn.dataset.del)).then(() => deleteFiles(ids)).catch(fail("Couldn’t delete"));
+      const delId = btn.dataset.del;
+      deleteDoc(doc(db, "permits", delId)).then(() => { deleteFiles(ids); cleanupThread(delId); }).catch(fail("Couldn’t delete"));
       viewDlg.close(); toast("Permit deleted");
     } else {
       btn.dataset.armed = "1"; btn.textContent = "Confirm delete";
@@ -1559,6 +1803,8 @@ function openForm(p, over){
   form.querySelector('input[name="pr"][value="'+(p ? p.priority : "Medium")+'"]').checked = true;
   $$('input[name="stage"]').forEach((c) => { c.checked = !!p && p.stage === c.value; });
   formSaved = false; removedExisting = [];
+  $("#remarksField").classList.toggle("hidden", !!p);
+  $("#fRemarks").value = "";
   setAtts(over.renew ? [] : ((p && p.scans) || []));
   $("#formErr").textContent = "";
   syncTerm();
@@ -1632,8 +1878,12 @@ form.addEventListener("submit", (e) => {
     target = Object.assign({id:ref.id}, payload);
   }
   const toDelete = removedExisting.slice(); removedExisting = []; formSaved = true;
-  batch.commit().then(() => deleteFiles(toDelete)).catch(fail("Couldn’t save"));
-  if (ui.props.length && ui.props.indexOf(prop) < 0) ui.props.push(prop);
+  const remarkText = wasEdit ? "" : $("#fRemarks").value.trim();
+  batch.commit().then(() => {
+    deleteFiles(toDelete);
+    if (remarkText) postRemark(target.id, remarkText).catch(fail("Couldn’t post the remark"));
+  }).catch(fail("Couldn’t save"));
+  if (ui.props.length && ui.props[0] !== prop) ui.props = [prop];
   formDlg.close();
   focusDate(target.issued);
   ui.editing = null; ui.renewing = false;
@@ -1771,6 +2021,172 @@ function discardSession(){
 $("#fileInput").addEventListener("change", (e) => { handleFiles(Array.from(e.target.files || [])); e.target.value = ""; });
 formDlg.addEventListener("close", () => { if (!formSaved) discardSession(); });
 
+/* ---------------- remarks chat ---------------- */
+const rkPop = $("#rkPop"), rkBack = $("#rkBack");
+let rk = {id:null, from:null, unsub:null, msgs:[], armed:null, tok:0};
+let rkSeq = 0;
+const RK_W = 340, RK_H = 380;
+
+function postRemark(pid, text){
+  const b = writeBatch(db);
+  b.set(doc(collection(db, "threads", pid, "messages")), {text:text, who:String(ME.name).slice(0, 80), email:ME.email, at:serverTimestamp()});
+  b.set(doc(db, "threads", pid), {count:increment(1), lastText:text.slice(0, 200), lastWho:String(ME.name).slice(0, 80), lastAt:serverTimestamp(), updatedAt:serverTimestamp()}, {merge:true});
+  return b.commit();
+}
+async function cleanupThread(pid){
+  try {
+    const s = await getDocs(collection(db, "threads", pid, "messages"));
+    for (let i = 0; i < s.docs.length; i += 400){
+      const b = writeBatch(db);
+      s.docs.slice(i, i + 400).forEach((d) => b.delete(d.ref));
+      await b.commit();
+    }
+    await deleteDoc(doc(db, "threads", pid));
+  } catch (e){ console.error("Couldn’t clean up remarks", e); }
+}
+function toggleResolve(){
+  if (!rk.id) return;
+  const t = threadOf(rk.id);
+  if (!(t.count > 0)) return;
+  const done = !!t.resolved;
+  updateDoc(doc(db, "threads", rk.id), {resolved:!done, resolvedBy:done ? null : String(ME.name).slice(0, 80), resolvedAt:done ? null : serverTimestamp(), updatedAt:serverTimestamp()})
+    .catch(fail("Couldn’t update the thread"));
+}
+function deleteRemark(mid){
+  if (!rk.id) return;
+  const rest = rk.msgs.filter((m) => m.id !== mid), last = rest[rest.length - 1];
+  const upd = {count:increment(-1), lastText:last ? String(last.text).slice(0, 200) : "", lastWho:last ? String(last.who || "").slice(0, 80) : null, updatedAt:serverTimestamp()};
+  if (!last){ upd.resolved = false; upd.resolvedBy = null; upd.resolvedAt = null; }
+  const b = writeBatch(db);
+  b.delete(doc(db, "threads", rk.id, "messages", mid));
+  b.update(doc(db, "threads", rk.id), upd);
+  rk.armed = null;
+  b.commit().catch(fail("Couldn’t delete the remark"));
+}
+function markRkSel(){
+  $$("#tbody .rkbtn").forEach((b) => {
+    const on = b.dataset.rk === rk.id;
+    b.classList.toggle("sel", on); b.setAttribute("aria-expanded", String(on));
+  });
+}
+function openRemarks(id, anchor){
+  const p = findPermit(id); if (!p) return;
+  closeRemarks();
+  const tok = ++rkSeq;
+  rk = {id:id, from:(anchor && anchor.closest("#permitTable")) ? "table" : null, unsub:null, msgs:[], armed:null, tok:tok};
+  $("#rkTitle").textContent = p.type;
+  $("#rkProp").textContent = p.property;
+  $("#rkText").value = "";
+  rkPop.classList.remove("hidden");
+  rk.unsub = onSnapshot(query(collection(db, "threads", id, "messages"), orderBy("at")), (s) => {
+    if (rk.tok !== tok) return;
+    rk.msgs = s.docs.map((d) => Object.assign({id:d.id}, d.data({serverTimestamps:"estimate"})));
+    renderRk(false);
+  }, fail("Couldn’t load the chat"));
+  markRkSel();
+  positionRk();
+  renderRk(true);
+  setTimeout(() => { if (rk.tok === tok && !$("#rkText").closest(".hidden")) $("#rkText").focus(); }, 0);
+}
+function closeRemarks(){
+  if (rk.unsub){ try { rk.unsub(); } catch (e) {} }
+  rk = {id:null, from:null, unsub:null, msgs:[], armed:null, tok:++rkSeq};
+  rkPop.classList.add("hidden");
+  rkBack.classList.add("hidden");
+  markRkSel();
+}
+function renderRk(scroll){
+  if (!rk.id) return;
+  const t = threadOf(rk.id), resolved = !!t.resolved && t.count > 0;
+  const box = $("#rkMsgs");
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  let html;
+  if (!rk.msgs.length) html = '<div class="rk-empty">No remarks yet.<br>Start the conversation below.</div>';
+  else html = rk.msgs.map((m) => {
+    const mine = m.email === ME.email, canDel = mine || can.admin;
+    const del = canDel ? '<button type="button" class="rk-del" data-delmsg="'+esc(m.id)+'">'+(rk.armed === m.id ? 'Confirm delete' : 'Delete')+'</button>' : '';
+    const time = esc(fmtDT(m.at));
+    return mine
+      ? '<div class="rk-m mine"><div class="rk-b">'+esc(m.text)+'</div><div class="rk-t">'+time+del+'</div></div>'
+      : '<div class="rk-m"><div class="rk-t"><b>'+esc(m.who || m.email)+'</b> '+time+'</div><div class="rk-b">'+esc(m.text)+'</div>'+(del ? '<div class="rk-t">'+del+'</div>' : '')+'</div>';
+  }).join("");
+  if (resolved) html += '<div class="rk-sys">'+RK_CHECK+'<span>Resolved by '+esc(t.resolvedBy || "someone")+', '+esc(fmtDT(t.resolvedAt))+'</span></div>';
+  box.innerHTML = html;
+  if (scroll || atBottom) box.scrollTop = box.scrollHeight;
+  const rb = $("#rkResolve");
+  rb.disabled = !(t.count > 0);
+  rb.classList.toggle("done", resolved);
+  rb.setAttribute("aria-pressed", String(resolved));
+  rb.title = resolved ? "Reopen this thread" : "Mark this thread as resolved";
+  $("#rkResolveLbl").textContent = resolved ? "Resolved" : "Resolve";
+  $("#rkComp").classList.toggle("hidden", resolved);
+  $("#rkDone").classList.toggle("hidden", !resolved);
+  updateSend();
+}
+function updateSend(){ $("#rkSend").disabled = !$("#rkText").value.trim(); }
+function sendRk(){
+  const ta = $("#rkText"), text = ta.value.trim();
+  if (!text || !rk.id) return;
+  ta.value = ""; updateSend();
+  postRemark(rk.id, text).catch((e) => {
+    if (!ta.value) ta.value = text;
+    updateSend(); fail("Couldn’t post the remark")(e);
+  });
+}
+function positionRk(){
+  if (!rk.id) return;
+  const mobile = mq("(max-width:720px)");
+  rkPop.classList.remove("side-l", "side-r", "center");
+  rkPop.style.left = ""; rkPop.style.top = ""; rkPop.style.height = "";
+  if (mobile){ rkBack.classList.remove("hidden"); return; }
+  const ph = Math.min(RK_H, window.innerHeight - 16);
+  rkPop.style.height = ph + "px";
+  const anchor = rk.from === "table" ? document.querySelector('#tbody [data-rk="' + rk.id + '"]') : null;
+  let centered = true;
+  if (anchor){
+    const r = anchor.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight){ closeRemarks(); return; }
+    const cy = r.top + r.height / 2;
+    let left = r.left - RK_W - 14, side = "side-l";
+    if (left < 8){ left = r.right + 14; side = "side-r"; }
+    if (left >= 8 && left + RK_W <= window.innerWidth - 8){
+      const top = Math.max(8, Math.min(cy - 56, window.innerHeight - ph - 8));
+      rkPop.style.left = left + "px"; rkPop.style.top = top + "px";
+      $("#rkArrow").style.top = Math.max(24, Math.min(cy - top - 6, ph - 40)) + "px";
+      rkPop.classList.add(side);
+      centered = false;
+    }
+  }
+  if (centered) rkPop.classList.add("center");
+  rkBack.classList.toggle("hidden", !centered);
+}
+$("#rkClose").addEventListener("click", closeRemarks);
+$("#rkResolve").addEventListener("click", toggleResolve);
+$("#rkReopen").addEventListener("click", toggleResolve);
+$("#rkSend").addEventListener("click", sendRk);
+$("#rkText").addEventListener("input", updateSend);
+$("#rkText").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendRk(); } });
+$("#rkMsgs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-delmsg]"); if (!b) return;
+  const id = b.dataset.delmsg;
+  if (rk.armed === id) deleteRemark(id); else { rk.armed = id; renderRk(false); }
+});
+window.addEventListener("resize", () => { if (rk.id) positionRk(); });
+$(".table-wrap").addEventListener("scroll", () => { if (rk.id) positionRk(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && rk.id && !viewDlg.open && !formDlg.open) closeRemarks(); });
+document.addEventListener("click", (e) => {
+  const path = e.composedPath ? e.composedPath() : [];
+  const trigger = e.target.closest("[data-rk]");
+  if (trigger){
+    if (!trigger.closest("dialog")){
+      const id = trigger.dataset.rk;
+      if (rk.id === id) closeRemarks(); else openRemarks(id, trigger);
+    }
+    return;
+  }
+  if (rk.id && path.indexOf(rkPop) < 0) closeRemarks();
+});
+
 /* ---------------- events: navigation + auth ---------------- */
 $$(".nav[data-page]").forEach((b) => {
   b.addEventListener("click", () => { ui.page = b.dataset.page; render(); window.scrollTo(0,0); });
@@ -1836,11 +2252,7 @@ $("#todayBtn").addEventListener("click", () => {
 $("#propChips").addEventListener("click", (e) => {
   const b = e.target.closest(".pchip"); if (!b) return;
   const n = b.dataset.prop;
-  if (n === "__all") ui.props = [];
-  else {
-    const i = ui.props.indexOf(n);
-    if (i > -1) ui.props.splice(i, 1); else ui.props.push(n);
-  }
+  ui.props = (n === "__all" || ui.props[0] === n) ? [] : [n];
   renderPermits();
 });
 
@@ -1867,12 +2279,13 @@ $("#thead").addEventListener("click", (e) => {
   ui.sort = ui.sort.key === k ? {key:k, dir:-ui.sort.dir} : {key:k, dir:1};
   renderTableBody();
 });
-function rowOpen(e){ const tr = e.target.closest("tr[data-id]"); if (tr) openDetail(tr.dataset.id); }
+function rowOpen(e){ if (e.target.closest("[data-rk]")) return; const tr = e.target.closest("tr[data-id]"); if (tr) openDetail(tr.dataset.id); }
 $("#tbody").addEventListener("click", rowOpen);
 $("#tbody").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); rowOpen(e); } });
 $("#tfType").addEventListener("change", (e) => { ui.tType = e.target.value; renderTableBody(); });
 $("#tfStatus").addEventListener("change", (e) => { ui.tStatus = e.target.value; renderTableBody(); });
 $("#tfStage").addEventListener("change", (e) => { ui.tStage = e.target.value; renderTableBody(); });
+$("#tfRemarks").addEventListener("change", (e) => { ui.tRemarks = e.target.value; renderTableBody(); });
 $("#sortSel").addEventListener("change", (e) => {
   const a = e.target.value.split(":"); if (a.length !== 2) return;
   ui.sort = {key:a[0], dir:+a[1]}; renderTableBody();
@@ -1881,7 +2294,7 @@ $("#filterToggle").addEventListener("click", () => {
   const open = $("#tabTools").classList.toggle("open");
   $("#filterToggle").setAttribute("aria-expanded", String(open));
 });
-$("#cardList").addEventListener("click", (e) => { const c = e.target.closest(".pcard"); if (c) openDetail(c.dataset.id); });
+$("#cardList").addEventListener("click", (e) => { const m = e.target.closest(".pc-main"); if (m) openDetail(m.dataset.id); });
 $("#monthAgenda").addEventListener("click", (e) => { const r = e.target.closest(".agrow"); if (r) openDetail(r.dataset.id); });
 $("#fab").addEventListener("click", () => openForm(null));
 $$('input[name="stage"]').forEach((c) => c.addEventListener("change", () => {
@@ -1971,6 +2384,8 @@ $("#addTypeBtn").addEventListener("click", addType);
 $("#newTypeName").addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); addType(); } });
 $("#setSoon").addEventListener("change", (e) => { prefs.soonDays = +e.target.value; savePrefs(); render(); });
 $("#setTheme").addEventListener("change", (e) => { prefs.theme = e.target.value; applyTheme(); savePrefs(); });
+$("#setHue").addEventListener("input", (e) => { prefs.hue = +e.target.value; applyAccent(); savePrefs(); });
+$("#hueReset").addEventListener("click", () => { prefs.hue = null; applyAccent(); savePrefs(); $("#setHue").value = 210; });
 
 /* ---------------- events: team (Firestore writes) ---------------- */
 $("#memberForm").addEventListener("submit", (e) => {
@@ -1981,7 +2396,7 @@ $("#memberForm").addEventListener("submit", (e) => {
   if (S.team.some((m) => m.email === email)){ toast("That email is already on the list."); return; }
   const role = $("#mRole").value.toLowerCase();
   setDoc(doc(db, "members", email), {email, name, role, addedAt:serverTimestamp()})
-    .then(() => toast("Member added. Remember to share the Drive folder with them too."))
+    .then(() => toast("Member added."))
     .catch(fail("Couldn’t add member"));
   $("#mName").value = ""; $("#mEmail").value = "";
 });
